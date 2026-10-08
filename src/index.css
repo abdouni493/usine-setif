@@ -1,0 +1,380 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+:root,
+html.dark {
+  /* PAPETERIE — Dark palette: carbon black & signal red */
+  --color-cream: #0b0b0c;
+  --color-gold: #ef4444;
+  --color-gold-light: #f87171;
+  --color-gold-dark: #dc2626;
+  --color-rose: #f43f5e;
+  --color-rose-deep: #e11d48;
+  --color-lavender: #a1a1aa;
+  --color-lavender-deep: #71717a;
+  --color-chocolate: #141416;
+  --color-caramel: #f59e0b;
+  --color-pistachio: #22c55e;
+  --color-vanilla: #1a1a1d;
+
+  --gradient-hero: radial-gradient(1200px 600px at 85% -10%, rgba(220, 38, 38, 0.22), transparent 60%), linear-gradient(160deg, #111113 0%, #0b0b0c 100%);
+  --gradient-sidebar: linear-gradient(180deg, #0f0f10 0%, #070708 100%);
+  --gradient-card: linear-gradient(180deg, #17171a 0%, #131315 100%);
+  --gradient-button: linear-gradient(180deg, #ef4444 0%, #dc2626 55%, #b91c1c 100%);
+  --gradient-rose: linear-gradient(180deg, #f43f5e 0%, #be123c 100%);
+  --gradient-lavender: linear-gradient(180deg, #52525b 0%, #27272a 100%);
+  --gradient-mint: linear-gradient(180deg, #22c55e 0%, #15803d 100%);
+  --gradient-glass: linear-gradient(180deg, rgba(23, 23, 26, 0.92) 0%, rgba(11, 11, 12, 0.88) 100%);
+
+  --text-primary: #f4f4f5;
+  --text-secondary: #d4d4d8;
+  --text-muted: #a1a1aa;
+  --text-light: #ffffff;
+
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 6px 20px rgba(0, 0, 0, 0.55);
+  --shadow-hover: 0 10px 28px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(239, 68, 68, 0.35);
+  --shadow-gold: 0 6px 18px rgba(220, 38, 38, 0.35);
+
+  --toast-success-fg: #4ade80;
+  --toast-success-bg: #0f1a13;
+  --toast-success-border: rgba(74, 222, 128, 0.35);
+  --toast-error-fg: #f87171;
+  --toast-error-bg: #1f0f10;
+  --toast-error-border: rgba(248, 113, 113, 0.4);
+  --toast-warning-fg: #fbbf24;
+  --toast-warning-bg: #1e180b;
+  --toast-warning-border: rgba(251, 191, 36, 0.35);
+  --toast-info-fg: #f4f4f5;
+  --toast-info-bg: #18181b;
+  --toast-info-border: rgba(239, 68, 68, 0.35);
+
+  --surface-dropdown: #18181b;
+  --surface-input: #111113;
+  --surface-input-focus: #161618;
+  --border-input: #3f3f46;
+  --logo-inner-bg: linear-gradient(to bottom right, #1c1c1f, #0b0b0c);
+  --logo-inner-solid: #000000;
+
+  /* Sidebar is always carbon black — the brand's signature surface */
+  --sidebar-bg: #0a0a0b;
+  --sidebar-border: #1f1f22;
+  --sidebar-text: #a1a1aa;
+  --sidebar-text-strong: #fafafa;
+  --sidebar-hover: rgba(255, 255, 255, 0.05);
+
+  /* RGB channels — let Tailwind apply opacity (bg-gold/10 …) */
+  --c-cream: 11 11 12;
+  --c-gold: 239 68 68;
+  --c-gold-light: 248 113 113;
+  --c-gold-dark: 220 38 38;
+  --c-rose: 244 63 94;
+  --c-rose-deep: 225 29 72;
+  --c-lavender: 161 161 170;
+  --c-lavender-deep: 113 113 122;
+  --c-chocolate: 20 20 22;
+  --c-caramel: 245 158 11;
+  --c-pistachio: 34 197 94;
+  --c-vanilla: 26 26 29;
+}
+
+html.light {
+  /* PAPETERIE — Light palette: paper white, ink black & signal red */
+  --color-cream: #f4f4f5;
+  --color-gold: #dc2626;
+  --color-gold-light: #ef4444;
+  --color-gold-dark: #b91c1c;
+  --color-rose: #e11d48;
+  --color-rose-deep: #be123c;
+  --color-lavender: #52525b;
+  --color-lavender-deep: #27272a;
+  --color-chocolate: #ffffff;
+  --color-caramel: #d97706;
+  --color-pistachio: #16a34a;
+  --color-vanilla: #f4f4f5;
+
+  --gradient-hero: radial-gradient(1200px 600px at 85% -10%, rgba(220, 38, 38, 0.10), transparent 60%), linear-gradient(160deg, #fafafa 0%, #ececee 100%);
+  --gradient-sidebar: linear-gradient(180deg, #0f0f10 0%, #070708 100%);
+  --gradient-card: linear-gradient(180deg, #ffffff 0%, #ffffff 100%);
+  --gradient-button: linear-gradient(180deg, #ef4444 0%, #dc2626 55%, #b91c1c 100%);
+  --gradient-rose: linear-gradient(180deg, #e11d48 0%, #9f1239 100%);
+  --gradient-lavender: linear-gradient(180deg, #3f3f46 0%, #18181b 100%);
+  --gradient-mint: linear-gradient(180deg, #22c55e 0%, #15803d 100%);
+  --gradient-glass: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(250, 250, 250, 0.94) 100%);
+
+  --text-primary: #0a0a0a;
+  --text-secondary: #27272a;
+  --text-muted: #52525b;
+  --text-light: #ffffff;
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.10), 0 0 0 1px rgba(220, 38, 38, 0.30);
+  --shadow-gold: 0 6px 16px rgba(220, 38, 38, 0.28);
+
+  --toast-success-fg: #15803d;
+  --toast-success-bg: #f0fdf4;
+  --toast-success-border: rgba(22, 163, 74, 0.35);
+  --toast-error-fg: #b91c1c;
+  --toast-error-bg: #fef2f2;
+  --toast-error-border: rgba(220, 38, 38, 0.35);
+  --toast-warning-fg: #b45309;
+  --toast-warning-bg: #fffbeb;
+  --toast-warning-border: rgba(217, 119, 6, 0.35);
+  --toast-info-fg: #18181b;
+  --toast-info-bg: #ffffff;
+  --toast-info-border: rgba(220, 38, 38, 0.30);
+
+  --surface-dropdown: #ffffff;
+  --surface-input: #ffffff;
+  --surface-input-focus: #ffffff;
+  --border-input: #d4d4d8;
+  --logo-inner-bg: linear-gradient(to bottom right, #18181b, #000000);
+  --logo-inner-solid: #000000;
+
+  --sidebar-bg: #0a0a0b;
+  --sidebar-border: #1f1f22;
+  --sidebar-text: #a1a1aa;
+  --sidebar-text-strong: #fafafa;
+  --sidebar-hover: rgba(255, 255, 255, 0.06);
+
+  /* RGB channels — let Tailwind apply opacity (bg-gold/10 …) */
+  --c-cream: 244 244 245;
+  --c-gold: 220 38 38;
+  --c-gold-light: 239 68 68;
+  --c-gold-dark: 185 28 28;
+  --c-rose: 225 29 72;
+  --c-rose-deep: 190 18 60;
+  --c-lavender: 82 82 91;
+  --c-lavender-deep: 39 39 42;
+  --c-chocolate: 255 255 255;
+  --c-caramel: 217 119 6;
+  --c-pistachio: 22 163 74;
+  --c-vanilla: 244 244 245;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: var(--color-cream);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Arabic font when RTL */
+html[dir='rtl'] body {
+  font-family: 'Cairo', 'Inter', sans-serif;
+}
+
+.font-display {
+  font-family: 'Inter', system-ui, sans-serif;
+  letter-spacing: -0.01em;
+}
+html[dir='rtl'] .font-display {
+  font-family: 'Cairo', serif;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+html.dark ::-webkit-scrollbar-track {
+  background: #0b0b0c;
+}
+html.light ::-webkit-scrollbar-track {
+  background: #f4f4f5;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(220, 38, 38, 0.35);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(220, 38, 38, 0.6);
+}
+
+/* Utility classes */
+.glass {
+  background: var(--gradient-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(220, 38, 38, 0.18);
+}
+
+.text-gradient-gold {
+  background: var(--gradient-button);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Animated Gold Metallic Button */
+.btn-gold-animated {
+  background: var(--gradient-button);
+  background-size: 200% 200%;
+  transition: all 0.3s ease;
+}
+.btn-gold-animated:hover {
+  background-position: right center;
+  box-shadow: var(--shadow-gold);
+}
+
+/* Number animation helper */
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(4deg);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, rgba(220, 38, 38, 0.04) 25%, rgba(220, 38, 38, 0.18) 50%, rgba(220, 38, 38, 0.04) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Print styles */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* ============================================================================
+ *  FLUIDITE DE L'INTERFACE
+ * ----------------------------------------------------------------------------
+ *  Trois reglages qui changent tout sur les postes de l'entreprise :
+ *   · les listes et les fenetres defilent de maniere fluide et sans a-coups ;
+ *   · les tableaux longs ne sont peints que lorsqu'ils entrent a l'ecran ;
+ *   · un utilisateur qui a demande « moins d'animations » dans son systeme
+ *     n'en recoit plus aucune.
+ * ========================================================================== */
+
+/* `animate-fadeIn` etait utilise dans l'application sans jamais avoir ete
+   defini : la classe ne faisait donc rien. La voici. */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn { animation: fadeIn 0.16s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* Barres de defilement fines. */
+* { scrollbar-width: thin; }
+
+/* ---------------------------------------------------------------------------
+ *  DEFILEMENT — CORRECTION
+ *  `overscroll-behavior: contain` etait pose sur TOUS les conteneurs
+ *  `overflow-x-auto` (chaque tableau de l'application) et sur <main>. Un
+ *  tableau plus large que l'ecran devient un conteneur de defilement : la
+ *  molette passee au-dessus de lui ne faisait plus defiler la PAGE — d'ou
+ *  « le defilement ne marche plus sur les interfaces ».
+ *  Seuls les conteneurs VERTICAUX (corps d'une fenetre, listes deroulantes)
+ *  retiennent desormais le defilement, et uniquement sur l'axe vertical.
+ * ------------------------------------------------------------------------- */
+.overflow-y-auto {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Barres de defilement discretes, aux couleurs de l'application. */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(113, 113, 122, 0.35);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(220, 38, 38, 0.55); background-clip: content-box; }
+
+/* `content-visibility: auto` sur les lignes de tableau a ete RETIRE : la
+   hauteur estimee (42 px) remplacee par la vraie hauteur a l'affichage
+   faisait sauter la barre de defilement et la page « bougeait » pendant le
+   defilement des longs tableaux. */
+
+/* Les cartes et les fenetres sont promues sur leur propre couche : le
+   navigateur les anime sans repeindre le reste de la page. */
+.shadow-card, .shadow-hover { will-change: auto; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================================
+ *  PAPETERIE — professional red & black finish
+ * ========================================================================== */
+button, a, [role='button'] { touch-action: manipulation; }
+:focus-visible { outline: 2px solid var(--color-gold); outline-offset: 2px; }
+::selection { background: rgba(220, 38, 38, 0.22); }
+
+/* Signature accent: thin red rule used on headers & section titles */
+.red-rule { position: relative; }
+.red-rule::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: var(--color-gold); border-radius: 2px;
+}
+html[dir='rtl'] .red-rule::before { left: auto; right: 0; }
+
+/* Subtle paper-grain texture on the hero (login) */
+.paper-grain {
+  background-image:
+    repeating-linear-gradient(0deg, rgba(0,0,0,0.018) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgba(0,0,0,0.012) 0 1px, transparent 1px 4px);
+}
+html.dark .paper-grain {
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.012) 0 1px, transparent 1px 4px);
+}
+
+/* Tables: crisp header with red underline */
+thead tr { border-bottom: 2px solid var(--color-gold) !important; }

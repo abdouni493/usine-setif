@@ -1,0 +1,103 @@
+import { forwardRef, type InputHTMLAttributes, type ReactNode } from 'react';
+import { cn } from '@/lib/utils';
+import { DateField } from './DateField';
+
+interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+  error?: string;
+  icon?: ReactNode;
+  suffix?: ReactNode;
+}
+
+export const Input = forwardRef<HTMLInputElement, InputProps>(
+  ({ className, label, error, icon, suffix, ...props }, ref) => {
+    /* ------------------------------------------------------------------
+     *  TOUTES LES DATES DE L'APPLICATION S'AFFICHENT EN jj/mm/aaaa.
+     *  Le champ natif suivrait la langue du navigateur (mm/dd/yyyy en
+     *  anglais) : on le remplace ici, une fois pour toutes, par `DateField`.
+     *  La valeur echangee avec l'appelant reste `YYYY-MM-DD`
+     *  (`YYYY-MM-DDTHH:mm` avec l'heure) — aucun ecran n'a a changer.
+     * ---------------------------------------------------------------- */
+    if (props.type === 'date' || props.type === 'datetime-local') {
+      const { type, value, onChange, ...rest } = props;
+      return (
+        <DateField
+          ref={ref}
+          label={label}
+          error={error}
+          icon={icon}
+          className={className}
+          withTime={type === 'datetime-local'}
+          value={(value as string) ?? ''}
+          onChange={(e) =>
+            onChange?.(e as unknown as React.ChangeEvent<HTMLInputElement>)
+          }
+          {...rest}
+        />
+      );
+    }
+
+    return (
+    <div className="w-full">
+      {label && (
+        <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
+          {label}
+        </label>
+      )}
+      <div className="relative">
+        {icon && (
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none">
+            {icon}
+          </span>
+        )}
+        <input
+          ref={ref}
+          className={cn(
+            'w-full h-10 rounded-md border px-3.5 text-sm font-medium transition-[border-color,box-shadow] focus:outline-none',
+            'bg-[--surface-input] text-text-primary placeholder:text-text-muted/70',
+            'focus:bg-[--surface-input-focus] focus:ring-[3px] focus:ring-gold/20 focus:border-gold',
+            icon && 'pl-10',
+            suffix && 'pr-12',
+            error ? 'border-rose-deep' : 'border-[--border-input]',
+            className
+          )}
+          {...props}
+        />
+        {suffix && <span className="absolute right-3 top-1/2 -translate-y-1/2">{suffix}</span>}
+      </div>
+      {error && <p className="text-xs text-rose-deep mt-1 font-medium">{error}</p>}
+    </div>
+    );
+  }
+);
+Input.displayName = 'Input';
+
+interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  label?: string;
+  error?: string;
+}
+
+export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
+  ({ className, label, error, ...props }, ref) => (
+    <div className="w-full">
+      {label && (
+        <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
+          {label}
+        </label>
+      )}
+      <textarea
+        ref={ref}
+        className={cn(
+          'w-full rounded-md border px-3.5 py-2.5 text-sm font-medium transition-all min-h-[80px] resize-y shadow-sm focus:outline-none',
+          'bg-[--surface-input] text-text-primary placeholder:text-text-muted/70',
+          'focus:bg-[--surface-input-focus] focus:ring-[3px] focus:ring-gold/20 focus:border-gold',
+          error ? 'border-rose-deep' : 'border-[--border-input]',
+          className
+        )}
+        {...props}
+      />
+      {error && <p className="text-xs text-rose-deep mt-1 font-medium">{error}</p>}
+    </div>
+  )
+);
+Textarea.displayName = 'Textarea';

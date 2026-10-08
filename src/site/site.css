@@ -1,0 +1,96 @@
+/* =============================================================================
+ *  SITE PUBLIC — thème « papier » : feuille crème, encre noire, rouge signal
+ *  (les couleurs de l'application). Tout est préfixé .site pour ne jamais
+ *  toucher l'application de gestion.
+ * ========================================================================== */
+.site {
+  --ink: #111113;
+  --ink-soft: #3f3f46;
+  --ink-muted: #5b5b63;
+  --paper: #fbf8f1;
+  --paper-2: #f3eee2;
+  --sheet: #ffffff;
+  --red: #dc2626;
+  --red-dark: #b91c1c;
+  --red-soft: #fee2e2;
+  --line: rgba(17, 17, 19, 0.1);
+  min-height: 100dvh;
+  background:
+    radial-gradient(900px 500px at 100% 0%, rgba(220, 38, 38, 0.06), transparent 60%),
+    linear-gradient(var(--paper), var(--paper));
+  color: var(--ink);
+  font-family: Inter, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.site .font-serif-display { font-family: 'Playfair Display', Georgia, serif; }
+.site[dir='rtl'] { font-family: Cairo, Inter, system-ui, sans-serif; }
+.site[dir='rtl'] .font-serif-display { font-family: Cairo, serif; font-weight: 800; }
+
+/* fine trame de papier en fond */
+.site-grain::before {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.35;
+  background-image: radial-gradient(rgba(17, 17, 19, 0.05) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+/* ---------- carte produit : une feuille posée sur une pile ---------- */
+.paper-card {
+  position: relative; background: var(--sheet); border: 1px solid var(--line); border-radius: 6px;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 10px 24px -14px rgba(17, 17, 19, 0.35);
+  transition: transform 0.25s cubic-bezier(.2,.8,.2,1), box-shadow 0.25s;
+}
+.paper-card::before, .paper-card::after {
+  content: ''; position: absolute; inset: 0; border-radius: 6px; background: var(--sheet);
+  border: 1px solid var(--line); z-index: -1; transition: transform 0.25s cubic-bezier(.2,.8,.2,1);
+}
+.paper-card::before { transform: rotate(-2deg) translate(-3px, 4px); background: var(--paper-2); }
+.paper-card::after { transform: rotate(1.5deg) translate(3px, 3px); }
+@media (hover: hover) {
+  .paper-card:hover { transform: translateY(-6px); box-shadow: 0 22px 40px -18px rgba(17, 17, 19, 0.45); }
+  .paper-card:hover::before { transform: rotate(-4deg) translate(-7px, 7px); }
+  .paper-card:hover::after { transform: rotate(3deg) translate(7px, 5px); }
+}
+/* coin corné rouge */
+.paper-corner {
+  position: absolute; top: 0; inset-inline-end: 0; width: 26px; height: 26px; z-index: 2;
+  background: linear-gradient(225deg, var(--paper) 50%, var(--red) 50%);
+  border-start-end-radius: 6px; box-shadow: -2px 2px 4px rgba(0, 0, 0, 0.12);
+}
+.site[dir='rtl'] .paper-corner { background: linear-gradient(135deg, var(--paper) 50%, var(--red) 50%); }
+
+/* lignes de cahier sous la description */
+.ruled {
+  background-image: repeating-linear-gradient(transparent, transparent 19px, rgba(220, 38, 38, 0.12) 20px);
+  line-height: 20px;
+}
+
+.site-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; min-height: 44px;
+  padding: 0 1.25rem; border-radius: 999px; font-weight: 700; font-size: 0.95rem; cursor: pointer;
+  transition: transform 0.15s, background-color 0.2s, color 0.2s, box-shadow 0.2s; touch-action: manipulation;
+}
+.site-btn:active { transform: scale(0.97); }
+.site-btn:focus-visible, .site a:focus-visible, .site button:focus-visible, .site input:focus-visible, .site textarea:focus-visible {
+  outline: 3px solid rgba(220, 38, 38, 0.55); outline-offset: 2px;
+}
+.site-btn-red { background: var(--red); color: #fff; box-shadow: 0 10px 22px -10px rgba(220, 38, 38, 0.8); }
+.site-btn-red:hover { background: var(--red-dark); }
+.site-btn-ink { background: var(--ink); color: #fff; }
+.site-btn-ink:hover { background: #000; }
+.site-btn-ghost { background: transparent; color: var(--ink); border: 1.5px solid var(--ink); }
+.site-btn-ghost:hover { background: var(--ink); color: #fff; }
+.site-btn:disabled { opacity: 0.5; pointer-events: none; }
+
+.site-input {
+  width: 100%; min-height: 46px; border-radius: 10px; border: 1.5px solid var(--line); background: #fff;
+  padding: 0.6rem 0.9rem; font-size: 16px; color: var(--ink); transition: border-color 0.2s;
+}
+.site-input:focus { border-color: var(--red); outline: none; }
+.site-label { display: block; font-size: 0.8rem; font-weight: 700; color: var(--ink-soft); margin-bottom: 0.35rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .site *, .site *::before, .site *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
+
+.site-page-in { animation: site-page-in 0.3s ease-out both; }
+@keyframes site-page-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }

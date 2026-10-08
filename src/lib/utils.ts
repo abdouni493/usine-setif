@@ -1,0 +1,215 @@
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+import { v4 as uuidv4 } from 'uuid';
+import type { PaymentMethod } from '@/types';
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+export function uid(prefix = 'id') {
+  return `${prefix}-${uuidv4().slice(0, 8)}`;
+}
+
+// Format currency: "1 550,00 DA"
+export function formatCurrency(amount: number): string {
+  const formatted = new Intl.NumberFormat('fr-FR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount || 0);
+  // Intl uses non-breaking spaces; keep them for nice grouping
+  return `${formatted} DA`;
+}
+
+export function formatNumber(value: number): string {
+  return new Intl.NumberFormat('fr-FR').format(value || 0);
+}
+
+// Format date DD/MM/YYYY (fr) or YYYY/MM/DD (ar)
+export function formatDate(dateStr: string | Date, lang: 'fr' | 'ar' = 'fr'): string {
+  if (!dateStr) return '—';
+  const d = typeof dateStr === 'string' ? new Date(dateStr) : dateStr;
+  if (isNaN(d.getTime())) return String(dateStr);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return lang === 'ar' ? `${year}/${month}/${day}` : `${day}/${month}/${year}`;
+}
+
+export function formatDateTime(dateStr: string | Date, lang: 'fr' | 'ar' = 'fr'): string {
+  if (!dateStr) return '—';
+  const d = typeof dateStr === 'string' ? new Date(dateStr) : dateStr;
+  if (isNaN(d.getTime())) return String(dateStr);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  return lang === 'ar'
+    ? `${year}/${month}/${day} ${hours}:${minutes}`
+    : `${day}/${month}/${year} ${hours}:${minutes}`;
+}
+
+/** `YYYY-MM-DD` d'une date, en heure LOCALE (jamais en UTC). */
+export function localISODate(d: Date = new Date()): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+/**
+ * Jour (`YYYY-MM-DD`) d'une valeur venue de la base, en heure LOCALE.
+ *
+ * Une date seule (`2026-07-19`) est rendue telle quelle. Un horodatage
+ * (`2026-07-18T12:06:00+00:00`) est converti dans le fuseau du poste : couper
+ * la chaine rangeait sinon un bon de livraison saisi le 19/07 au 18/07 dans
+ * les comptes rendus, alors que l'ecran l'affiche au 19/07.
+ */
+export function dayOf(value?: string | null): string {
+  if (!value) return '';
+  if (value.length <= 10) return value;
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? value.slice(0, 10) : localISODate(d);
+}
+
+/**
+ * Date du jour, en heure LOCALE.
+ * `toISOString()` donne la date UTC : sur un poste en avance sur l'UTC, chaque
+ * document saisi le matin tombait la veille — un décalage d'un jour dans les
+ * comptes rendus et les rapports.
+ */
+export function todayISO(): string {
+  return localISODate(new Date());
+}
+
+export function nowTime(): string {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+// Days difference from today
+export function daysUntil(dateStr: string | null): number | null {
+  if (!dateStr) return null;
+  const target = new Date(dateStr);
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  target.setHours(0, 0, 0, 0);
+  return Math.round((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+export function isWithinRange(dateStr: string, from: string, to: string): boolean {
+  const d = new Date(dateStr).getTime();
+  return d >= new Date(from).getTime() && d <= new Date(to + 'T23:59:59').getTime();
+}
+
+// Date filter helpers for "today / week / month"
+export type DateFilter = 'all' | 'today' | 'week' | 'month' | 'custom';
+
+export function matchesDateFilter(
+  dateStr: string,
+  filter: DateFilter,
+  customFrom?: string,
+  customTo?: string
+): boolean {
+  if (filter === 'all') return true;
+  const d = new Date(dateStr);
+  const now = new Date();
+  if (filter === 'today') {
+    return d.toDateString() === now.toDateString();
+  }
+  if (filter === 'week') {
+    const weekAgo = new Date();
+    weekAgo.setDate(now.getDate() - 7);
+    return d >= weekAgo && d <= now;
+  }
+  if (filter === 'month') {
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }
+  if (filter === 'custom' && customFrom && customTo) {
+    return isWithinRange(dateStr, customFrom, customTo);
+  }
+  return true;
+}
+
+export function downloadJSON(data: unknown, filename: string) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export function getMonthLabel(dateStr: string): string {
+  const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+  const d = new Date(dateStr);
+  return `${months[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+// ============================================================================
+//  TVA — option activable à la caisse (19 % par défaut, taux modifiable)
+// ----------------------------------------------------------------------------
+//  Le net à payer d'une vente est toujours :
+//     base HT = total des lignes − réduction
+//     TVA     = base HT × taux / 100   (0 quand l'option est désactivée)
+//     TTC     = base HT + TVA
+//  Cette fonction est la référence unique : caisse, magasin des ventes,
+//  facture imprimée et base de données appliquent exactement le même calcul.
+// ============================================================================
+
+/** Taux de TVA proposé par défaut lorsque l'option est activée. */
+export const DEFAULT_TVA_RATE = 19;
+
+export interface TvaBreakdown {
+  /** Base hors taxes : total des lignes moins la réduction. */
+  baseHT: number;
+  /** Taux réellement appliqué (0 quand l'option est désactivée). */
+  rate: number;
+  /** Montant de la TVA, arrondi au centime. */
+  tvaAmount: number;
+  /** Net à payer toutes taxes comprises. */
+  totalTTC: number;
+}
+
+export function computeTva(total: number, reduction = 0, enabled = false, rate = DEFAULT_TVA_RATE): TvaBreakdown {
+  const baseHT = Math.max(0, (Number(total) || 0) - (Number(reduction) || 0));
+  const appliedRate = enabled ? Math.max(0, Number(rate) || 0) : 0;
+  const tvaAmount = enabled ? Math.round(baseHT * appliedRate) / 100 : 0;
+  return { baseHT, rate: appliedRate, tvaAmount, totalTTC: Math.round((baseHT + tvaAmount) * 100) / 100 };
+}
+
+// ============================================================================
+//  MODES DE RÈGLEMENT — espèces, chèque bancaire, virement bancaire
+// ----------------------------------------------------------------------------
+//  Utilisés par les versements clients ET les règlements fournisseurs : la
+//  saisie, l'historique, le reçu imprimé et les comptes rendus affichent tous
+//  le même libellé.
+// ============================================================================
+
+export const PAYMENT_METHODS: { value: PaymentMethod; label: string; icon: string }[] = [
+  { value: 'especes', label: 'Espèces', icon: '💵' },
+  { value: 'cheque', label: 'Chèque bancaire', icon: '🧾' },
+  { value: 'virement', label: 'Virement bancaire', icon: '🏦' },
+];
+
+/** Nom court du mode de règlement (« Espèces », « Chèque bancaire »…). */
+export function paymentMethodName(method?: PaymentMethod): string {
+  return PAYMENT_METHODS.find((m) => m.value === method)?.label ?? 'Espèces';
+}
+
+/** Libellé complet : mode + n° de chèque / de virement + banque. */
+export function paymentMethodLabel(p: {
+  method?: PaymentMethod;
+  chequeNumber?: string;
+  virementNumber?: string;
+  bankName?: string;
+}): string {
+  const bank = p.bankName ? ` — ${p.bankName}` : '';
+  if (p.method === 'cheque') {
+    return `Chèque bancaire${p.chequeNumber ? ` n° ${p.chequeNumber}` : ''}${bank}`;
+  }
+  if (p.method === 'virement') {
+    return `Virement bancaire${p.virementNumber ? ` n° ${p.virementNumber}` : ''}${bank}`;
+  }
+  return 'Espèces';
+}

@@ -1,0 +1,14 @@
+node_modules
+dist
+dist-ssr
+*.local
+.env
+.DS_Store
+*.log
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# local tooling
+.claude/settings.local.json
+*.tsbuildinfo

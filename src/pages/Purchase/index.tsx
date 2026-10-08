@@ -1,0 +1,491 @@
+import { useMemo, useState } from 'react';
+import { ShoppingCart, Plus, Eye, Wallet, Printer, Trash2, Calendar, Folder, DollarSign, TrendingDown, CheckCircle2, FileText, CarFront, History, PencilLine, Undo2 } from 'lucide-react';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { SearchBar } from '@/components/ui/SearchBar';
+import { Select } from '@/components/ui/Select';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Card } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { Modal } from '@/components/ui/Modal';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { ViewToggle } from '@/components/ui/ViewToggle';
+import { DataTable, useViewMode, type DataColumn } from '@/components/ui/DataTable';
+import type { ActionItem } from '@/components/ui/ActionMenu';
+import { CreatePurchase } from './CreatePurchase';
+import { PurchaseReturnModal, printReturn } from './PurchaseReturnModal';
+import { PayDebtModal } from '@/components/shared/PayDebtModal';
+import { usePurchaseStore } from '@/store/purchaseStore';
+import { useSupplierStore } from '@/store/supplierStore';
+import { useStockStore } from '@/store/stockStore';
+import { useSettingsStore } from '@/store/settingsStore';
+import { useLanguage } from '@/hooks/useLanguage';
+import { usePermissions } from '@/hooks/usePermissions';
+import { formatCurrency, formatDate, matchesDateFilter, isWithinRange, todayISO, type DateFilter } from '@/lib/utils';
+import { printInvoice } from '@/lib/print';
+import { toast } from '@/components/ui/Toast';
+import type { Purchase } from '@/types';
+
+export default function PurchasePage() {
+  const { t, language } = useLanguage();
+  const { can } = usePermissions();
+  const { purchases, returns, payDebt, deletePurchase } = usePurchaseStore();
+  /** Facture dont la marchandise est rendue au fournisseur. */
+  const [returning, setReturning] = useState<Purchase | null>(null);
+  const suppliers = useSupplierStore((s) => s.suppliers);
+  const settings = useSettingsStore((s) => s.settings);
+  const stockProducts = useStockStore((s) => s.products);
+  const units = useStockStore((s) => s.units);
+
+  const [search, setSearch] = useState('');
+  const [dateFilter, setDateFilter] = useState<DateFilter | 'period'>('all');
+  const [startDate, setStartDate] = useState(todayISO());
+  const [endDate, setEndDate] = useState(todayISO());
+  const [unitFilter, setUnitFilter] = useState('');
+  // Toutes les interfaces s'ouvrent en TABLEAU par defaut ; le choix de
+  // l'operateur est memorise pour cet ecran.
+  const [view, setView] = useViewMode('purchase');
+
+  const [createOpen, setCreateOpen] = useState(false);
+  /** Ouvre le même formulaire en mode « ancien achat » (saisie rétroactive). */
+  const [createHistoricalOpen, setCreateHistoricalOpen] = useState(false);
+  const [viewing, setViewing] = useState<Purchase | null>(null);
+  /** Facture rouverte dans le formulaire de création pour être corrigée. */
+  const [editing, setEditing] = useState<Purchase | null>(null);
+  const [paying, setPaying] = useState<Purchase | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const supplierName = (id: string) => suppliers.find((s) => s.id === id)?.name || '—';
+
+  const filtered = useMemo(() => {
+    return purchases.filter((p) => {
+      const q = search.toLowerCase();
+      const matchSearch =
+        supplierName(p.supplierId).toLowerCase().includes(q) ||
+        p.reference.toLowerCase().includes(q) ||
+        (p.bonNumber || '').toLowerCase().includes(q) ||
+        (p.driverPlate || '').toLowerCase().includes(q);
+      
+      const matchDate = dateFilter === 'period'
+        ? isWithinRange(p.date, startDate, endDate)
+        : matchesDateFilter(p.date, dateFilter as DateFilter);
+
+      const matchUnit = !unitFilter || p.products.some((line) => {
+        const prod = stockProducts.find((sp) => sp.id === line.productId);
+        return (line.unit || prod?.unit) === unitFilter;
+      });
+
+      return matchSearch && matchDate && matchUnit;
+    });
+  }, [purchases, search, dateFilter, startDate, endDate, unitFilter, stockProducts, suppliers]);
+
+  // Statistics calculation for the filtered purchases
+  const stats = useMemo(() => {
+    let totalPurchases = 0;
+    let totalPaid = 0;
+    let totalDebt = 0;
+    filtered.forEach((p) => {
+      totalPurchases += p.totalAmount;
+      totalPaid += p.paidAmount;
+      totalDebt += p.restAmount;
+    });
+    return { totalPurchases, totalPaid, totalDebt };
+  }, [filtered]);
+
+  /** Units involved in an invoice — displayed as badges on the card. */
+  const getPurchaseUnits = (purchase: Purchase) => {
+    const list = purchase.products
+      .map((line) => line.unit || stockProducts.find((sp) => sp.id === line.productId)?.unit || null)
+      .filter(Boolean) as string[];
+    return Array.from(new Set(list));
+  };
+
+  const handlePrint = (p: Purchase) => {
+    const sup = suppliers.find((s) => s.id === p.supplierId);
+    printInvoice({
+      type: 'purchase', reference: p.reference, date: p.date,
+      partyName: sup?.name || '—', partyPhone: sup?.phone, partyAddress: sup?.address,
+      bonNumber: p.bonNumber, driverPlate: p.driverPlate, historical: p.isHistorical,
+      lines: p.products.map((l) => ({ designation: l.productName || '', quantity: l.quantity, unitPrice: l.purchasePrice })),
+      total: p.totalAmount, paid: p.paidAmount, rest: p.restAmount,
+    }, settings);
+  };
+
+  /* ------------------------------------------------------------ tableau --
+   * Les actions ne sont plus alignees sur chaque ligne : elles sont
+   * regroupees dans le menu « trois points » de la derniere colonne.
+   * -------------------------------------------------------------------- */
+  const purchaseColumns: DataColumn<Purchase>[] = [
+    {
+      key: 'ref', label: t('reference'),
+      render: (p) => (
+        <span className="flex items-center gap-1.5 font-semibold">
+          {p.reference}
+          {p.isHistorical && (
+            <Badge variant="warning" className="px-1.5 py-0 text-[9px]"><History size={9} /> Ancien</Badge>
+          )}
+        </span>
+      ),
+    },
+    { key: 'supplier', label: t('supplier'), render: (p) => supplierName(p.supplierId) },
+    { key: 'date', label: t('date'), render: (p) => formatDate(p.date, language) },
+    { key: 'bon', label: 'N° BL / matricule', hideOnMobile: true,
+      render: (p) => [p.bonNumber, p.driverPlate].filter(Boolean).join(' · ') || '—' },
+    { key: 'items', label: 'Articles', align: 'right', render: (p) => p.products.length },
+    { key: 'total', label: t('total'), align: 'right', render: (p) => formatCurrency(p.totalAmount) },
+    { key: 'paid', label: t('paid'), align: 'right',
+      render: (p) => <span className="text-pistachio">{formatCurrency(p.paidAmount)}</span> },
+    { key: 'rest', label: t('rest'), align: 'right',
+      render: (p) => (
+        <span className={p.restAmount > 0 ? 'font-bold text-rose-deep' : 'text-pistachio'}>
+          {formatCurrency(p.restAmount)}
+        </span>
+      ) },
+  ];
+
+  const purchaseActions = (p: Purchase): ActionItem[] => [
+    { label: 'Voir le détail', icon: <Eye size={15} />, onClick: () => setViewing(p) },
+    { label: 'Modifier la facture', icon: <PencilLine size={15} />, hidden: !can('purchase', 'edit'),
+      onClick: () => setEditing(p) },
+    { label: 'Payer la dette', icon: <Wallet size={15} />,
+      hidden: !can('purchase', 'pay') || p.restAmount <= 0, onClick: () => setPaying(p) },
+    { label: "Retour d'achat (récupérer)", icon: <Undo2 size={15} />,
+      hidden: !can('purchase', 'edit') || p.isHistorical, onClick: () => setReturning(p) },
+    { label: t('print'), icon: <Printer size={15} />, onClick: () => handlePrint(p) },
+    { label: t('delete'), icon: <Trash2 size={15} />, danger: true, hidden: !can('purchase', 'delete'),
+      onClick: () => setDeleteId(p.id) },
+  ];
+
+  return (
+    <div>
+      <PageHeader title={t('purchase')} icon={<ShoppingCart size={24} />} subtitle={`${purchases.length} factures`}
+        actions={can('purchase', 'create') && (
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="gold" onClick={() => setCreateOpen(true)}><Plus size={18} /> {t('newPurchase')}</Button>
+            <Button
+              variant="secondary"
+              onClick={() => setCreateHistoricalOpen(true)}
+              title="Saisir une facture d'achat antérieure sans toucher au stock actuel"
+            >
+              <History size={18} /> Ancien achat
+            </Button>
+          </div>
+        )}
+      />
+
+      {/* Stats Cards Section */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 animate-fadeIn">
+        <div className="bg-gradient-to-br from-gold/10 to-gold/5 border border-gold/20 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+          <div>
+            <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Total des Achats</p>
+            <p className="text-xl font-bold text-gold-dark mt-1 tabular">{formatCurrency(stats.totalPurchases)}</p>
+          </div>
+          <div className="bg-gold/15 p-3 rounded-xl text-gold-dark">
+            <DollarSign size={20} />
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-pistachio/10 to-pistachio/5 border border-pistachio/20 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+          <div>
+            <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Total Payé</p>
+            <p className="text-xl font-bold text-pistachio mt-1 tabular">{formatCurrency(stats.totalPaid)}</p>
+          </div>
+          <div className="bg-pistachio/15 p-3 rounded-xl text-pistachio">
+            <CheckCircle2 size={20} />
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-rose-deep/10 to-rose-deep/5 border border-rose-deep/20 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+          <div>
+            <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Total Dette / Restant</p>
+            <p className="text-xl font-bold text-rose-deep mt-1 tabular">{formatCurrency(stats.totalDebt)}</p>
+          </div>
+          <div className="bg-rose-deep/15 p-3 rounded-xl text-rose-deep">
+            <TrendingDown size={20} />
+          </div>
+        </div>
+      </div>
+
+      {/* Filters bar */}
+      <div className="flex flex-wrap items-center gap-3 mb-6 bg-vanilla/20 p-4 rounded-2xl border border-gold/10">
+        <div className="flex-1 min-w-[200px]">
+          <SearchBar value={search} onChange={setSearch} placeholder={`${t('search')} ${t('supplier')}, Réf., n° de bon ou matricule`} />
+        </div>
+        
+        {/* Unit filtering */}
+        <div className="w-[180px] flex items-center gap-2">
+          <Folder size={16} className="text-gold-dark shrink-0" />
+          <Select
+            value={unitFilter}
+            onChange={(e) => setUnitFilter(e.target.value)}
+            placeholder="Toutes unités"
+            options={units.map((u) => ({ value: u.name, label: u.name }))}
+            className="w-full"
+          />
+        </div>
+
+        {/* Date filtering */}
+        <div className="w-[180px] flex items-center gap-2">
+          <Calendar size={16} className="text-gold-dark shrink-0" />
+          <Select 
+            value={dateFilter} 
+            onChange={(e) => setDateFilter(e.target.value as any)}
+            options={[
+              { value: 'all', label: t('all') }, 
+              { value: 'today', label: 'Ce jour' }, 
+              { value: 'week', label: 'La semaine dernière' }, 
+              { value: 'month', label: 'Le mois dernier' },
+              { value: 'period', label: 'Par période' }
+            ]}
+            className="w-full" 
+          />
+        </div>
+
+        <ViewToggle view={view} onChange={setView} />
+
+        {/* Period inputs */}
+        {/* Champs de date de l'application : affiches en jj/mm/aaaa comme
+            partout ailleurs, et non au format de la langue du navigateur. */}
+        {dateFilter === 'period' && (
+          <div className="flex items-end gap-2 animate-fadeIn">
+            <Input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="max-w-[170px]"
+            />
+            <span className="pb-2.5 text-xs text-text-muted">à</span>
+            <Input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="max-w-[170px]"
+            />
+          </div>
+        )}
+      </div>
+
+      {filtered.length === 0 ? <EmptyState message={t('noData')} /> : view === 'table' ? (
+        <DataTable
+          rows={filtered}
+          columns={purchaseColumns}
+          rowKey={(p) => p.id}
+          actions={purchaseActions}
+          onRowClick={(p) => setViewing(p)}
+        />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 animate-fadeIn">
+          {filtered.map((p, i) => {
+            const cats = getPurchaseUnits(p);
+            return (
+              <Card key={p.id} index={i} hoverable className="flex flex-col border border-gold/10 hover:border-gold/30 transition-all duration-300">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="font-display font-semibold text-text-primary flex items-center gap-1.5">
+                    {p.reference}
+                    {p.isHistorical && (
+                      <Badge variant="warning" className="text-[9px] px-1.5 py-0">
+                        <History size={9} /> Ancien
+                      </Badge>
+                    )}
+                  </h3>
+                  <span className="text-xs text-text-muted">{formatDate(p.date, language)}</span>
+                </div>
+                <p className="text-sm font-semibold text-text-secondary mb-1">{supplierName(p.supplierId)}</p>
+                <p className="text-xs text-text-muted mb-2">{p.products.length} article(s)</p>
+
+                {(p.bonNumber || p.driverPlate) && (
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-2 text-[11px] text-text-secondary">
+                    {p.bonNumber && (
+                      <span className="flex items-center gap-1"><FileText size={11} className="text-gold" /> Bon <span className="font-semibold tabular">{p.bonNumber}</span></span>
+                    )}
+                    {p.driverPlate && (
+                      <span className="flex items-center gap-1"><CarFront size={11} className="text-gold" /> <span className="font-semibold tabular">{p.driverPlate}</span></span>
+                    )}
+                  </div>
+                )}
+                
+                {/* Categories Badge Display */}
+                {cats.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-3">
+                    {cats.map((catName) => (
+                      <Badge key={catName} variant="info" className="bg-gold/10 text-gold-dark border-0 text-[10px] py-0.5 px-2">
+                        {catName}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+
+                {p.createdBy && <p className="text-xs text-text-muted mb-3">{t('createdBy')}: {p.createdBy}</p>}
+                
+                <div className="bg-vanilla/40 rounded-xl p-3 space-y-1.5 text-xs mb-3">
+                  <div className="flex justify-between"><span className="text-text-muted">{t('total')}</span><span className="tabular font-semibold text-text-primary">{formatCurrency(p.totalAmount)}</span></div>
+                  <div className="flex justify-between"><span className="text-text-muted">{t('paid')}</span><span className="tabular text-pistachio font-medium">{formatCurrency(p.paidAmount)}</span></div>
+                  <div className="flex justify-between border-t border-gold/5 pt-1.5 mt-1.5"><span className="text-text-muted font-medium">{t('rest')}</span>
+                    <span className={`tabular font-bold ${p.restAmount > 0 ? 'text-rose-deep animate-pulse' : 'text-pistachio'}`}>{formatCurrency(p.restAmount)}</span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between gap-2 mt-auto pt-2 border-t border-gold/5">
+                  {p.restAmount > 0 ? (
+                    <Badge variant="danger" className="bg-rose-deep/10 text-rose-deep border-0 text-[10px]">Dette</Badge>
+                  ) : (
+                    <Badge variant="success" className="bg-pistachio/10 text-pistachio border-0 text-[10px]">Soldée</Badge>
+                  )}
+                  
+                  <div className="flex items-center gap-1">
+                    <Button size="sm" variant="secondary" className="px-2" onClick={() => setViewing(p)} title={t('view')}><Eye size={13} /></Button>
+                    {can('purchase', 'edit') && (
+                      <Button
+                        size="sm" variant="secondary" className="px-2"
+                        onClick={() => setEditing(p)}
+                        title="Modifier la facture (produits, quantités, prix, règlement)"
+                      >
+                        <PencilLine size={13} className="text-gold-dark" />
+                      </Button>
+                    )}
+                    {can('purchase', 'pay') && p.restAmount > 0 && (
+                      <Button size="sm" variant="gold" className="text-xs" onClick={() => setPaying(p)}>
+                        <Wallet size={13} /> {t('pay')}
+                      </Button>
+                    )}
+                    {can('purchase', 'edit') && !p.isHistorical && (
+                      <Button size="sm" variant="secondary" className="px-2" onClick={() => setReturning(p)} title="Retour d'achat (récupérer)">
+                        <Undo2 size={13} className="text-gold-dark" />
+                      </Button>
+                    )}
+                    <Button size="sm" variant="secondary" className="px-2" onClick={() => handlePrint(p)} title={t('print')}><Printer size={13} /></Button>
+                    {can('purchase', 'delete') && (
+                      <Button size="sm" variant="ghost" className="px-2 hover:bg-rose-deep/5" onClick={() => setDeleteId(p.id)} title={t('delete')}>
+                        <Trash2 size={13} className="text-rose-deep" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title={t('newPurchase')} size="lg">
+        <CreatePurchase onClose={() => setCreateOpen(false)} onCreated={(pur) => setViewing(pur)} />
+      </Modal>
+
+      <Modal
+        open={createHistoricalOpen}
+        onClose={() => setCreateHistoricalOpen(false)}
+        title="Ancien achat — saisie rétroactive"
+        size="lg"
+      >
+        <CreatePurchase
+          historical
+          onClose={() => setCreateHistoricalOpen(false)}
+          onCreated={(pur) => setViewing(pur)}
+        />
+      </Modal>
+
+      {/* Modification : MÊME formulaire que la création, pré-rempli */}
+      <Modal
+        open={!!editing}
+        onClose={() => setEditing(null)}
+        title={`Modifier la facture ${editing?.reference ?? ''}`}
+        size="lg"
+      >
+        {editing && (
+          <CreatePurchase
+            editing={editing}
+            onClose={() => setEditing(null)}
+            onCreated={(pur) => setViewing(pur)}
+          />
+        )}
+      </Modal>
+
+      <Modal open={!!viewing} onClose={() => setViewing(null)} title={viewing?.reference} size="md">
+        {viewing && (
+          <div className="space-y-4">
+            <p className="text-sm text-text-secondary">{supplierName(viewing.supplierId)} — {formatDate(viewing.date, language)}</p>
+            {viewing.isHistorical && (
+              <div className="rounded-xl border border-caramel/40 bg-caramel/10 px-3 py-2 text-xs font-medium text-gold-dark">
+                <span className="flex items-center gap-1.5 font-bold"><History size={13} /> Ancien achat (saisie rétroactive)</span>
+                Les quantités de cette facture n'ont pas été ajoutées au stock actuel ; elle ne sert
+                qu'à l'historique du fournisseur et aux rapports.
+              </div>
+            )}
+            {(viewing.bonNumber || viewing.driverPlate) && (
+              <div className="flex flex-wrap gap-2">
+                {viewing.bonNumber && (
+                  <Badge variant="info" className="bg-gold/10 text-gold-dark border-0"><FileText size={12} /> Bon n° {viewing.bonNumber}</Badge>
+                )}
+                {viewing.driverPlate && (
+                  <Badge variant="info" className="bg-gold/10 text-gold-dark border-0"><CarFront size={12} /> Matricule {viewing.driverPlate}</Badge>
+                )}
+              </div>
+            )}
+            {viewing.createdBy && <p className="text-xs text-text-muted">{t('createdBy')}: {viewing.createdBy}</p>}
+            <table className="w-full text-sm">
+              <thead className="bg-vanilla/60"><tr><th className="text-left px-3 py-2">{t('name')}</th><th className="text-right px-3 py-2">{t('quantity')}</th><th className="text-right px-3 py-2">P.U.</th><th className="text-right px-3 py-2">Total</th></tr></thead>
+              <tbody>{viewing.products.map((l, i) => (
+                <tr key={i} className="border-t border-gold/10"><td className="px-3 py-2">{l.productName}{l.unitEnabled && l.unit ? <span className="text-xs text-gold-dark"> · {l.unit}</span> : null}</td><td className="px-3 py-2 text-right tabular">{l.quantity}{l.unitEnabled && l.unit ? ` ${l.unit}` : ''}</td><td className="px-3 py-2 text-right tabular">{formatCurrency(l.purchasePrice)}{l.unitEnabled && l.unit ? `/${l.unit}` : ''}</td><td className="px-3 py-2 text-right tabular">{formatCurrency(l.quantity * l.purchasePrice)}</td></tr>
+              ))}</tbody>
+            </table>
+            {viewing.payments.length > 0 && (
+              <div>
+                <h4 className="text-sm font-semibold text-text-secondary mb-2">Paiements</h4>
+                {viewing.payments.map((pay, i) => (
+                  <div key={i} className="flex justify-between text-sm py-1 border-b border-gold/10">
+                    <span className="text-text-muted">{formatDate(pay.date, language)} — {pay.description}</span>
+                    <span className="tabular">{formatCurrency(pay.amount)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {returns.some((r) => r.purchaseId === viewing.id) && (
+              <div>
+                <p className="text-sm font-semibold text-text-secondary mb-2">Retours d'achat</p>
+                {returns.filter((r) => r.purchaseId === viewing.id).map((r) => (
+                  <div key={r.id} className="flex items-center justify-between gap-2 text-sm py-1 border-b border-gold/10">
+                    <span className="text-text-muted">
+                      {formatDate(r.date, language)} — {r.reference} · {r.items.map((i) => `${i.productName} × ${i.quantity}`).join(', ')}
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <span className="tabular font-semibold">− {formatCurrency(r.totalAmount)}</span>
+                      <Button size="sm" variant="secondary" className="px-2" onClick={() => printReturn(r, viewing)} title={t('print')}>
+                        <Printer size={13} />
+                      </Button>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" onClick={() => handlePrint(viewing)}><Printer size={16} /> {t('print')}</Button>
+              {can('purchase', 'edit') && !viewing.isHistorical && (
+                <Button variant="outline" onClick={() => { setReturning(viewing); setViewing(null); }}>
+                  <Undo2 size={16} /> Retour d'achat
+                </Button>
+              )}
+              {can('purchase', 'edit') && (
+                <Button
+                  variant="gold"
+                  onClick={() => { setEditing(viewing); setViewing(null); }}
+                >
+                  <PencilLine size={16} /> Modifier la facture
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {paying && (
+        <PayDebtModal open={!!paying} onClose={() => setPaying(null)} reference={paying.reference} partyName={supplierName(paying.supplierId)}
+          total={paying.totalAmount} paid={paying.paidAmount} onPay={(amount, _desc, paidAt) => { void payDebt(paying.id, amount, (paidAt || new Date().toISOString()).slice(0, 10)); }} />
+      )}
+
+      <PurchaseReturnModal purchase={returning} onClose={() => setReturning(null)} />
+
+      <ConfirmDialog open={!!deleteId} onClose={() => setDeleteId(null)} onConfirm={() => { if (deleteId) { void deletePurchase(deleteId).then(() => toast.success('Facture supprimée')); } }} />
+    </div>
+  );
+}
