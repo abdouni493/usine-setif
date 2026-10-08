@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Package, Ruler, Boxes, Coins, CalendarClock } from 'lucide-react';
+import { Package, Ruler, Boxes, Coins, CalendarClock, ImagePlus, X, Loader2 } from 'lucide-react';
 import { Input, Textarea } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Switch } from '@/components/ui/Switch';
 import { UnitSelect } from '@/components/shared/UnitSelect';
 import { formatCurrency } from '@/lib/utils';
+import { uploadImage } from '@/lib/storage';
+import { toast } from '@/components/ui/Toast';
 import type { Product } from '@/types';
 
 interface ProductFormProps {
@@ -33,13 +35,29 @@ export function ProductForm({ initial, onSubmit, onCancel }: ProductFormProps) {
     purchasePrice: initial?.purchasePrice ?? 0,
     expirationEnabled: initial?.expirationEnabled ?? false,
     expirationDate: initial?.expirationDate || '',
+    imageUrl: initial?.imageUrl || '',
   });
+  const [uploading, setUploading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
   const set = (k: string, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
   const u = form.unit ? ` (${form.unit})` : '';
   const stockValue = Number(form.currentQuantity || 0) * Number(form.purchasePrice || 0);
+
+  const handleImage = async (file?: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { toast.error('Choisissez une image (PNG, JPG, WEBP)'); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("L'image dépasse 5 Mo"); return; }
+    setUploading(true);
+    try {
+      set('imageUrl', await uploadImage('product-images', file, 'products'));
+    } catch {
+      toast.error("Impossible d'envoyer l'image");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,6 +86,7 @@ export function ProductForm({ initial, onSubmit, onCancel }: ProductFormProps) {
         unit: form.unit.trim(),
         expirationEnabled: form.expirationEnabled,
         expirationDate: form.expirationEnabled ? form.expirationDate || null : null,
+        imageUrl: form.imageUrl || '',
       });
     } finally {
       setSaving(false);
@@ -86,15 +105,46 @@ export function ProductForm({ initial, onSubmit, onCancel }: ProductFormProps) {
           value={form.name}
           onChange={(e) => set('name', e.target.value)}
           error={errors.name}
-          placeholder="Ex : Pâte de cellulose, Papier recyclé, Amidon, Bobine kraft 120 g/m²…"
+          placeholder="Ex : Rond à béton HA12, Treillis soudé, Fil recuit, Tôle 2 mm…"
           autoFocus
         />
         <Textarea
           label="Description"
           value={form.description}
           onChange={(e) => set('description', e.target.value)}
-          placeholder="Précisions utiles : qualité, provenance, conditionnement…"
+          placeholder="Précisions utiles : nuance d'acier, diamètre, longueur, provenance…"
         />
+        <div>
+          <p className="text-xs font-medium text-text-secondary mb-1.5">Image du produit</p>
+          <div className="flex items-center gap-3">
+            <div className="relative h-24 w-24 shrink-0 rounded-xl border border-gold/20 bg-vanilla/50 overflow-hidden flex items-center justify-center">
+              {form.imageUrl
+                ? <img src={form.imageUrl} alt="" className="h-full w-full object-cover" />
+                : <Package size={28} className="text-text-muted/50" />}
+              {uploading && (
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                  <Loader2 size={20} className="animate-spin text-white" />
+                </div>
+              )}
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="inline-flex items-center gap-2 cursor-pointer rounded-md border border-gold/30 px-3 py-1.5 text-xs font-semibold text-text-primary hover:border-gold/60 hover:text-gold transition-colors">
+                <ImagePlus size={14} /> {form.imageUrl ? "Changer l'image" : 'Télécharger une image'}
+                <input
+                  type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="hidden"
+                  onChange={(e) => { void handleImage(e.target.files?.[0]); e.target.value = ''; }}
+                />
+              </label>
+              {form.imageUrl && (
+                <button type="button" onClick={() => set('imageUrl', '')}
+                  className="inline-flex items-center gap-1 text-xs text-rose-deep hover:underline">
+                  <X size={12} /> Retirer l'image
+                </button>
+              )}
+              <p className="text-[10px] text-text-muted">PNG, JPG ou WEBP — 5 Mo max.</p>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* 2 — Unité */}
@@ -174,7 +224,7 @@ export function ProductForm({ initial, onSubmit, onCancel }: ProductFormProps) {
 
       <div className="flex justify-end gap-3 pt-1">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={saving}>Annuler</Button>
-        <Button type="submit" variant="gold" disabled={saving}>
+        <Button type="submit" variant="gold" disabled={saving || uploading}>
           {saving ? 'Enregistrement…' : initial ? 'Mettre à jour' : 'Créer le produit'}
         </Button>
       </div>

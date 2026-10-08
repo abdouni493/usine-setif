@@ -140,6 +140,7 @@ const toProduct = (r: any): Product => ({
   unit: r.unit ?? undefined,
   expirationEnabled: r.expiration_enabled ?? false,
   expirationDate: r.expiration_date ?? null,
+  imageUrl: r.image_url ?? undefined,
   createdAt: (r.created_at ?? '').slice(0, 10),
   createdBy: r.created_by ?? undefined,
 });
@@ -160,6 +161,7 @@ const fromProduct = (p: Partial<Product>) => {
   if (p.unit !== undefined) row.unit = p.unit || null;
   if (p.expirationEnabled !== undefined) row.expiration_enabled = p.expirationEnabled ?? false;
   if (p.expirationDate !== undefined) row.expiration_date = p.expirationDate || null;
+  if (p.imageUrl !== undefined) row.image_url = p.imageUrl || null;
   return row;
 };
 
@@ -782,7 +784,7 @@ const toFiche = (r: any): FicheTechnic => ({
 
 const toSettings = (r: any): StoreSettings => ({
   logo: r.logo ?? null,
-  name: r.name ?? 'Papeterie Production',
+  name: r.name ?? 'Façonnage Acier',
   description: r.description ?? '',
   email: r.email ?? '',
   phone: r.phone ?? '',

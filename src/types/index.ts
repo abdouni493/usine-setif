@@ -45,6 +45,8 @@ export interface Product {
   unit?: string;
   expirationEnabled: boolean;
   expirationDate: string | null;
+  /** Photo du produit (bucket product-images). */
+  imageUrl?: string;
   createdAt: string;
   createdBy?: string;
 }

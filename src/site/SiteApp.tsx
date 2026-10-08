@@ -260,7 +260,7 @@ function TextBlocks({ location, className = '' }: { location: SiteText['location
     <div className={`grid gap-4 sm:grid-cols-2 ${className}`}>
       {texts.map((x, i) => (
         <motion.article key={x.id} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-          transition={{ delay: i * 0.05, duration: 0.3 }} className="paper-card p-5">
+          transition={{ delay: i * 0.05, duration: 0.3 }} className="steel-card p-5">
           {x.title && <h3 className="font-serif-display text-xl font-bold mb-2">{x.title}</h3>}
           <p className="text-[var(--ink-soft)] whitespace-pre-line leading-relaxed">{x.content}</p>
         </motion.article>
@@ -307,10 +307,9 @@ function Landing() {
             <Link to="/site/contact" className="site-btn !min-h-[52px] !px-8 text-base bg-white/10 text-white border border-white/40 hover:bg-white hover:text-[var(--ink)]">{t('aboutUs')}</Link>
           </motion.div>
         </div>
-        {/* bord déchiré de la feuille */}
-        <svg className="absolute bottom-0 left-0 w-full h-6 text-[var(--paper)]" viewBox="0 0 1200 24" preserveAspectRatio="none" aria-hidden>
-          <path fill="currentColor" d="M0 24V12l40 6 50-9 60 8 45-10 55 9 50-6 60 8 40-11 55 9 45-6 60 9 50-8 45 7 60-9 50 8 45-6 55 9 50-8 40 6 60-9 45 8 55-7 50 9 40-6 50 8V24z" />
-        </svg>
+        {/* poutre d'acier : bande de sécurité en bas du bandeau */}
+        <div aria-hidden className="absolute bottom-0 left-0 w-full h-2.5"
+          style={{ background: 'repeating-linear-gradient(135deg, var(--red) 0 14px, var(--ink) 14px 28px)' }} />
       </section>
 
       <section className="mx-auto max-w-7xl px-4 mt-12 space-y-12">
@@ -339,11 +338,11 @@ function ProductCard({ p, index, onOpen }: { p: SiteProduct; index: number; onOp
   const addIt = () => { add(p.id); setAdded(true); window.setTimeout(() => setAdded(false), 1200); };
   return (
     <motion.div layout
-      initial={reduce ? false : { opacity: 0, y: 24, rotate: index % 2 ? 1.5 : -1.5 }}
-      whileInView={{ opacity: 1, y: 0, rotate: 0 }} viewport={{ once: true, margin: '-40px' }}
+      initial={reduce ? false : { opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-40px' }}
       transition={{ delay: (index % 8) * 0.04, ...SPRING }}
-      className="paper-card flex flex-col overflow-visible">
-      <span className="paper-corner" aria-hidden />
+      className="steel-card flex flex-col overflow-visible">
+      <span className="steel-corner" aria-hidden />
       <button onClick={onOpen} className="text-start flex-1 flex flex-col cursor-pointer" aria-label={`${t('details')} — ${p.name}`}>
         <div className="m-2 mb-0 aspect-[4/3] sm:aspect-square rounded overflow-hidden bg-[var(--paper-2)] border border-black/[0.06]">
           {p.image
@@ -509,7 +508,7 @@ function Contacts() {
           {s?.site_description && <p className="mt-4 text-lg text-[var(--ink-soft)]">{s.site_description}</p>}
           {s?.about_text && <p className="mt-6 text-[var(--ink-soft)] leading-relaxed whitespace-pre-line max-w-prose">{s.about_text}</p>}
         </div>
-        <div className="paper-card p-6 space-y-3">
+        <div className="steel-card p-6 space-y-3">
           <h2 className="font-serif-display text-2xl font-bold mb-1">{t('contactUs')}</h2>
           {items.map((x, i) => (
             <a key={i} href={x.href} target={x.href.startsWith('http') ? '_blank' : undefined} rel="noreferrer"
@@ -537,7 +536,7 @@ function Contacts() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-5">
             {gallery.map((p, i) => (
               <motion.div key={p.id} initial={{ opacity: 0, scale: 0.94 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }}
-                transition={{ delay: i * 0.04 }} className="paper-card p-1.5">
+                transition={{ delay: i * 0.04 }} className="steel-card p-1.5">
                 <Link to={`/site/commande?produit=${p.id}`} className="block">
                   <img src={p.image as string} alt={p.name} loading="lazy" className="aspect-square w-full object-cover rounded" />
                   <p className="px-1 py-2 text-sm font-semibold truncate">{p.name}</p>
@@ -607,7 +606,7 @@ function OrderPage() {
           className="mx-auto h-20 w-20 rounded-full bg-[var(--red)] text-white flex items-center justify-center shadow-xl"><Check size={40} /></motion.div>
         <h1 className="mt-6 font-serif-display text-3xl font-extrabold">{t('orderSent')}</h1>
         <p className="mt-2 text-[var(--ink-soft)]">{t('orderThanks')}</p>
-        <div className="paper-card mt-6 p-5 text-start space-y-1">
+        <div className="steel-card mt-6 p-5 text-start space-y-1">
           <p className="flex justify-between"><span>{t('orderRef')}</span><strong className="font-mono">{done.reference}</strong></p>
         </div>
         <Link to="/site/offres" className="site-btn site-btn-red mt-8">{t('continueShopping')}</Link>
@@ -648,7 +647,7 @@ function OrderPage() {
           </div>
 
           {lines.length === 0 ? (
-            <div className="paper-card p-10 text-center">
+            <div className="steel-card p-10 text-center">
               <ShoppingBag size={40} className="mx-auto text-black/25" />
               <p className="mt-3 text-[var(--ink-soft)]">{t('emptyCart')}</p>
               <Link to="/site/offres" className="site-btn site-btn-red mt-5">{t('browse')}</Link>
@@ -657,7 +656,7 @@ function OrderPage() {
             <AnimatePresence initial={false}>
               {lines.map((l) => (
                 <motion.div key={l.id} layout initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 30 }}
-                  transition={SPRING} className="paper-card p-3 flex flex-wrap sm:flex-nowrap items-center gap-3">
+                  transition={SPRING} className="steel-card p-3 flex flex-wrap sm:flex-nowrap items-center gap-3">
                   <div className="h-20 w-20 shrink-0 rounded overflow-hidden bg-[var(--paper-2)]">
                     {l.p.image ? <img src={l.p.image} alt="" className="h-full w-full object-cover" /> : <Package className="m-auto mt-6 text-black/25" />}
                   </div>
@@ -673,7 +672,7 @@ function OrderPage() {
           )}
         </div>
 
-        <form onSubmit={submit} className="paper-card p-5 sm:p-6 space-y-4 lg:sticky lg:top-24">
+        <form onSubmit={submit} className="steel-card p-5 sm:p-6 space-y-4 lg:sticky lg:top-24">
           <h2 className="font-serif-display text-2xl font-bold">{t('yourInfo')}</h2>
           {client ? (
             <div className="rounded-lg bg-[var(--paper-2)] p-3 text-sm">
@@ -750,8 +749,8 @@ function LoginPage() {
       <div className="absolute inset-0 -z-10 bg-gradient-to-br from-black/80 to-black/60" />
       <div className="absolute top-4 end-4"><LangSwitch /></div>
       <motion.form onSubmit={submit} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={SPRING}
-        className="paper-card w-full max-w-md p-7 space-y-5">
-        <span className="paper-corner" aria-hidden />
+        className="steel-card w-full max-w-md p-7 space-y-5">
+        <span className="steel-corner" aria-hidden />
         <div className="text-center space-y-2">
           {s?.logo && <img src={s.logo} alt="" className="mx-auto h-16 w-16 object-contain" />}
           <h1 className="font-serif-display text-2xl font-extrabold">{s?.site_name || s?.company_name}</h1>

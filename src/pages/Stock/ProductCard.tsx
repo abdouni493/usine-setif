@@ -1,4 +1,4 @@
-import { Eye, Pencil, Trash2, User, Ruler, AlertTriangle, TrendingUp } from 'lucide-react';
+import { Eye, Pencil, Trash2, User, Ruler, AlertTriangle, TrendingUp, Package } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -36,6 +36,18 @@ export function ProductCard({ product, index, onView, onEdit, onDelete, canEdit,
         isOut ? 'border-rose-deep/40' : isLow ? 'border-caramel/40' : 'border-gold/20 hover:border-gold/50'
       }`}
     >
+      {/* Image */}
+      <div className="-mx-4 -mt-4 mb-3 aspect-[16/9] overflow-hidden rounded-t-2xl border-b border-gold/10 bg-vanilla/50">
+        {product.imageUrl ? (
+          <img src={product.imageUrl} alt={product.name} loading="lazy"
+            className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" />
+        ) : (
+          <div className="h-full w-full flex items-center justify-center text-text-muted/40">
+            <Package size={36} />
+          </div>
+        )}
+      </div>
+
       {/* Header */}
       <div className="flex items-start justify-between gap-2 mb-3 pb-3 border-b border-gold/10">
         <div className="min-w-0">

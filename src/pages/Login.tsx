@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Lock, User, Eye, EyeOff, UserPlus, Sun, Moon, LogIn, Layers, ScrollText, ShieldCheck, Globe } from 'lucide-react';
+import { Lock, User, Eye, EyeOff, UserPlus, Sun, Moon, LogIn, Construction, Ruler, ShieldCheck, Globe } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useThemeStore } from '@/store/themeStore';
@@ -116,18 +116,31 @@ export default function Login() {
     <div className="min-h-screen w-full grid lg:grid-cols-[1.05fr_1fr] bg-cream">
       {/* ---------------- Brand panel (always ink-black) ---------------- */}
       <div className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-[#0a0a0b] text-white p-12">
-        <div className="absolute inset-0 paper-grain opacity-60" />
-        {[0, 1, 2].map((k) => (
+        <div className="absolute inset-0 steel-grain opacity-60" />
+        {/* bundle of ribbed rebars */}
+        {[0, 1, 2, 3, 4, 5].map((k) => (
           <motion.div
             key={k}
             aria-hidden
-            className="absolute right-[-80px] bottom-[-60px] h-[420px] w-[320px] rounded-sm border border-white/10 bg-white/[0.03]"
-            style={{ rotate: -14 + k * 9 }}
-            initial={{ opacity: 0, y: 80 }}
-            animate={{ opacity: 1, y: k * -18 }}
-            transition={{ type: 'spring', stiffness: 120, damping: 20, delay: 0.15 + k * 0.12 }}
+            className="steel-rebar absolute right-[-120px] h-[14px] w-[560px] rounded-full"
+            style={{ bottom: 70 + k * 26, rotate: -24 }}
+            initial={{ opacity: 0, x: 160 }}
+            animate={{ opacity: 1, x: k * -10 }}
+            transition={{ type: 'spring', stiffness: 120, damping: 20, delay: 0.15 + k * 0.08 }}
           />
         ))}
+        {/* I-beam profile */}
+        <motion.div
+          aria-hidden
+          className="absolute right-16 top-24 h-40 w-28"
+          initial={{ opacity: 0, y: -40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: 'spring', stiffness: 120, damping: 20, delay: 0.3 }}
+        >
+          <div className="steel-plate absolute inset-x-0 top-0 h-5 rounded-sm" />
+          <div className="steel-plate absolute left-1/2 top-5 bottom-5 w-5 -translate-x-1/2" />
+          <div className="steel-plate absolute inset-x-0 bottom-0 h-5 rounded-sm" />
+        </motion.div>
         <motion.div
           aria-hidden
           className="absolute -left-24 top-1/3 h-72 w-72 rounded-full bg-red-600/25 blur-3xl"
@@ -138,9 +151,9 @@ export default function Login() {
         <div className="relative flex items-center gap-3">
           <LogoBadge size={48} icon={26} />
           <div>
-            <p className="text-lg font-bold leading-tight">{store.name || 'Papeterie Production'}</p>
+            <p className="text-lg font-bold leading-tight">{store.name || 'Façonnage Acier'}</p>
             <p className="text-[11px] uppercase tracking-[0.18em] text-red-500 font-semibold">
-              {store.description || 'Production de papier'}
+              {store.description || "Façonnage d'acier de construction"}
             </p>
           </div>
         </div>
@@ -158,7 +171,7 @@ export default function Login() {
             transition={{ type: 'spring', stiffness: 200, damping: 24, delay: 0.25 }}
             className="text-4xl font-extrabold leading-[1.1] tracking-tight"
           >
-            Gestion de l&apos;usine de <span className="text-red-500">production de papier</span>.
+            Gestion de l&apos;usine de <span className="text-red-500">façonnage d&apos;acier</span>.
           </motion.h2>
           <motion.p
             initial={{ opacity: 0 }}
@@ -166,14 +179,14 @@ export default function Login() {
             transition={{ delay: 0.45 }}
             className="mt-4 text-sm text-zinc-400 leading-relaxed"
           >
-            Matières premières, fabrication, stock, ventes, commandes, caisse et personnel — dans une seule
+            Rond à béton, cadres, treillis, façonnage, stock, ventes, commandes, caisse et personnel — dans une seule
             interface sécurisée.
           </motion.p>
         </div>
 
         <div className="relative flex items-center gap-6 text-[11px] uppercase tracking-[0.16em] text-zinc-500">
-          <span className="inline-flex items-center gap-2"><Layers size={14} className="text-red-500" /> Production</span>
-          <span className="inline-flex items-center gap-2"><ScrollText size={14} className="text-red-500" /> Facturation</span>
+          <span className="inline-flex items-center gap-2"><Construction size={14} className="text-red-500" /> Façonnage</span>
+          <span className="inline-flex items-center gap-2"><Ruler size={14} className="text-red-500" /> Facturation</span>
           <span className="inline-flex items-center gap-2"><ShieldCheck size={14} className="text-red-500" /> Accès sécurisé</span>
         </div>
       </div>
@@ -301,7 +314,7 @@ export default function Login() {
         <form onSubmit={handleCreateAdmin} className="space-y-4">
           <Input label="Nom Complet *" value={regName} onChange={(e) => setRegName(e.target.value)} placeholder="Ex: Ahmed Benali" required />
           <Input label="Nom d'utilisateur *" value={regUsername} onChange={(e) => setRegUsername(e.target.value)} placeholder="Ex: admin" required />
-          <Input label="Adresse Email *" type="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} placeholder="admin@papeterie.dz" required />
+          <Input label="Adresse Email *" type="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} placeholder="admin@acier.dz" required />
           <Input label="Mot de Passe *" type="password" value={regPassword} onChange={(e) => setRegPassword(e.target.value)} placeholder="••••••••" required />
           <div className="flex justify-end gap-2 pt-3 border-t border-black/[0.07] dark:border-white/[0.07]">
             <Button type="button" variant="secondary" onClick={() => setIsRegistering(false)} disabled={creating}>

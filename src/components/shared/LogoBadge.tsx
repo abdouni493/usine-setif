@@ -1,5 +1,5 @@
 import { motion, useReducedMotion } from 'framer-motion';
-import { ScrollText } from 'lucide-react';
+import { Anvil } from 'lucide-react';
 import { useSettingsStore } from '@/store/settingsStore';
 
 interface LogoBadgeProps {
@@ -9,7 +9,7 @@ interface LogoBadgeProps {
 }
 
 /**
- * Brand mark — ink-black tile with a red corner fold (a sheet of paper).
+ * Brand mark — ink-black steel tile with a red hazard-striped flange.
  * Shows the uploaded store logo when there is one.
  */
 export function LogoBadge({ size = 44, icon = 24, className = '' }: LogoBadgeProps) {
@@ -29,16 +29,16 @@ export function LogoBadge({ size = 44, icon = 24, className = '' }: LogoBadgePro
         <img src={logo} alt="logo" className="h-full w-full object-cover" />
       ) : (
         <div className="flex h-full w-full items-center justify-center">
-          <ScrollText size={icon} className="text-white" strokeWidth={1.75} />
+          <Anvil size={icon} className="text-white" strokeWidth={1.75} />
         </div>
       )}
-      {/* red folded corner */}
+      {/* red hazard-striped flange (steel beam) */}
       <span
         aria-hidden
-        className="absolute right-0 top-0"
+        className="absolute inset-x-0 bottom-0"
         style={{
-          width: fold, height: fold,
-          background: 'linear-gradient(225deg, #dc2626 50%, rgba(0,0,0,0) 50%)',
+          height: Math.max(3, Math.round(fold / 3)),
+          background: 'repeating-linear-gradient(135deg, #dc2626 0 5px, #0a0a0b 5px 9px)',
         }}
       />
     </motion.div>

@@ -65,10 +65,10 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             <LogoBadge size={42} icon={22} />
             <div className="min-w-0">
               <h2 className="text-[15px] font-bold leading-tight truncate" style={{ color: 'var(--sidebar-text-strong)' }}>
-                {store.name || 'Papeterie Production'}
+                {store.name || 'Façonnage Acier'}
               </h2>
               <p className="text-[10.5px] uppercase tracking-[0.14em] truncate text-red-500 font-semibold">
-                {store.description || 'Production de papier'}
+                {store.description || "Façonnage d'acier de construction"}
               </p>
             </div>
           </div>

@@ -364,16 +364,25 @@ button, a, [role='button'] { touch-action: manipulation; }
 }
 html[dir='rtl'] .red-rule::before { left: auto; right: 0; }
 
-/* Subtle paper-grain texture on the hero (login) */
-.paper-grain {
+/* Brushed-steel texture on the hero (login) */
+.steel-grain {
   background-image:
-    repeating-linear-gradient(0deg, rgba(0,0,0,0.018) 0 1px, transparent 1px 3px),
-    repeating-linear-gradient(90deg, rgba(0,0,0,0.012) 0 1px, transparent 1px 4px);
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.01) 0 1px, transparent 1px 6px);
 }
-html.dark .paper-grain {
-  background-image:
-    repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0 1px, transparent 1px 3px),
-    repeating-linear-gradient(90deg, rgba(255,255,255,0.012) 0 1px, transparent 1px 4px);
+/* Ribbed rebar (rond à béton) */
+.steel-rebar {
+  background:
+    repeating-linear-gradient(70deg, rgba(0,0,0,0.45) 0 2px, transparent 2px 11px),
+    linear-gradient(180deg, #5b5f66 0%, #c9ccd1 38%, #6b6f76 62%, #2a2c30 100%);
+  box-shadow: 0 6px 14px -6px rgba(0,0,0,0.8);
+  opacity: 0.55;
+}
+/* Steel plate / beam section */
+.steel-plate {
+  background: linear-gradient(135deg, #3a3d42 0%, #8b8f96 45%, #3a3d42 100%);
+  border: 1px solid rgba(255,255,255,0.12);
+  opacity: 0.35;
 }
 
 /* Tables: crisp header with red underline */
