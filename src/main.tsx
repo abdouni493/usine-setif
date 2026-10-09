@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { purgeLegacyStorage } from './lib/legacyStorage';
 import { installLiveNames } from './lib/liveNames';
+import { installAutoTranslate } from './lib/autoTranslate';
 
 // Self-hosted brand fonts (bundled locally — work fully offline, identical design)
 import '@fontsource/playfair-display/400.css';
@@ -27,6 +28,9 @@ purgeLegacyStorage();
 
 // un produit renomme s'affiche et s'imprime partout sous son nouveau nom
 installLiveNames();
+
+// interface entièrement traduite quand la langue choisie est l'arabe
+installAutoTranslate();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

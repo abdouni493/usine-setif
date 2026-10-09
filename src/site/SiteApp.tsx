@@ -45,7 +45,7 @@ export default function SiteApp() {
   }, [settings]);
 
   return (
-    <div className="site site-grain" dir={lang === 'ar' ? 'rtl' : 'ltr'} lang={lang}>
+    <div className="site site-grain" data-no-translate dir={lang === 'ar' ? 'rtl' : 'ltr'} lang={lang}>
       {!loaded ? (
         <div className="min-h-dvh flex items-center justify-center">
           <span className="h-10 w-10 rounded-full border-4 border-red-200 border-t-red-600 animate-spin" />
