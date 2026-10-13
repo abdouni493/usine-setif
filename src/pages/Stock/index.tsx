@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
-  Package, Plus, Eye, Pencil, Trash2, AlertTriangle, Boxes, Coins, Ruler, RefreshCw, History,
+  Package, Plus, Eye, Pencil, Trash2, AlertTriangle, Boxes, Coins, Ruler, RefreshCw, History, Factory,
 } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { SearchBar } from '@/components/ui/SearchBar';
@@ -16,6 +16,7 @@ import { StatCard } from '@/components/shared/StatCard';
 import { ProductForm } from '@/components/shared/ProductForm';
 import { ProductCard } from './ProductCard';
 import { ProductHistory } from './ProductHistory';
+import { ProductionProducts } from './ProductionProducts';
 import { useStockStore } from '@/store/stockStore';
 import { useFicheTechnicStore } from '@/store/ficheTechnicStore';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -48,6 +49,7 @@ export default function Stock() {
   const [editing, setEditing] = useState<Product | null>(null);
   const [viewing, setViewing] = useState<Product | null>(null);
   const [historyOf, setHistoryOf] = useState<Product | null>(null);
+  const [section, setSection] = useState<'raw' | 'production'>('raw');
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const filtered = useMemo(
@@ -196,6 +198,19 @@ export default function Stock() {
         <StatCard label="Ruptures" value={stats.out} icon={<AlertTriangle size={22} />} index={3} accent="rose" />
       </div>
 
+      {/* Matières premières / produits de production (fiches techniques) */}
+      <div className="flex flex-wrap gap-2">
+        {([['raw', 'Matières premières', <Boxes key="r" size={16} />], ['production', `Produits de production (${ficheTechnics.length})`, <Factory key="p" size={16} />]] as const).map(([id, label, icon]) => (
+          <button key={id} type="button" onClick={() => setSection(id)}
+            className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition-colors ${
+              section === id ? 'border-gold bg-gold/15 text-gold-dark shadow-card' : 'border-gold/20 text-text-muted hover:bg-gold/5'
+            }`}>
+            {icon} {label}
+          </button>
+        ))}
+      </div>
+
+      {section === 'production' ? <ProductionProducts /> : (<>
       {/* Controls */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex-1 min-w-[220px]">
@@ -301,6 +316,7 @@ export default function Stock() {
           </table>
         </div>
       )}
+      </>)}
 
       {/* Create / Edit modal */}
       <Modal

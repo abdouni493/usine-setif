@@ -29,7 +29,7 @@ import type { Product } from '@/types';
  *   · VENTES BL       — matière retirée du stock par les bons de livraison.
  * ========================================================================== */
 
-type Period = 'all' | 'today' | 'week' | 'month' | 'year' | 'custom';
+export type Period = 'all' | 'today' | 'week' | 'month' | 'year' | 'custom';
 
 interface PurchaseRow { date: string; ref: string; supplier: string; bon?: string; qty: number; price: number; total: number; old?: boolean }
 interface ReturnRow { date: string; ref: string; supplier: string; reason: string; qty: number; price: number; total: number }
@@ -45,7 +45,7 @@ const PRINT_PARTS: { id: PrintPart; label: string }[] = [
   { id: 'bl', label: 'Ventes par bon de livraison' },
 ];
 
-function periodRange(p: Period, from: string, to: string): [string, string] {
+export function periodRange(p: Period, from: string, to: string): [string, string] {
   const today = todayISO();
   const d = new Date();
   if (p === 'today') return [today, today];
@@ -431,7 +431,7 @@ const TONES = {
   rose: 'border-rose-deep/30 bg-rose-deep/10 text-rose-deep',
 };
 
-function SummaryCard({ icon, title, value, lines, tone }: { icon: ReactNode; title: string; value: string; lines: string[]; tone: keyof typeof TONES }) {
+export function SummaryCard({ icon, title, value, lines, tone }: { icon: ReactNode; title: string; value: string; lines: string[]; tone: keyof typeof TONES }) {
   return (
     <div className={`rounded-2xl border p-3.5 ${TONES[tone]}`}>
       <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider">{icon} {title}</p>
@@ -443,7 +443,7 @@ function SummaryCard({ icon, title, value, lines, tone }: { icon: ReactNode; tit
   );
 }
 
-function Section({ icon, title, subtitle, head, rows, empty }: {
+export function Section({ icon, title, subtitle, head, rows, empty }: {
   icon: ReactNode; title: string; subtitle: string; head: string[]; rows: ReactNode[][]; empty: string;
 }) {
   return (
