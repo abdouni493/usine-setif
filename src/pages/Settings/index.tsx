@@ -11,6 +11,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { downloadJSON, todayISO } from '@/lib/utils';
 import { toast } from '@/components/ui/Toast';
 import { RecycleBin } from './RecycleBin';
+import { ExcelBackup } from './ExcelBackup';
 import { uploadImage } from '@/lib/storage';
 
 const STORE_KEYS = [
@@ -172,6 +173,7 @@ export default function SettingsPage() {
             <input ref={fileRef} type="file" accept="application/json" className="hidden" onChange={handleRestore} />
             <Button variant="danger" onClick={() => fileRef.current?.click()}><Upload size={16} /> {t('selectFile')}</Button>
           </Card>
+          <ExcelBackup />
         </div>
       )}
 

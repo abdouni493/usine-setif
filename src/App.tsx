@@ -138,6 +138,10 @@ export default function App() {
       setHydrating(true);
       await hydrateFromSupabase();
       if (!cancelled) setHydrating(false);
+      // sauvegarde Excel automatique, une fois par jour (administrateur)
+      if (!cancelled && useAuthStore.getState().user?.role === 'admin') {
+        void import('./lib/excelBackup').then((m) => m.runDailyAutoBackup());
+      }
     })();
     return () => { cancelled = true; };
   }, [isAuthenticated]);

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
-  Package, Plus, Eye, Pencil, Trash2, AlertTriangle, Boxes, Coins, Ruler, RefreshCw,
+  Package, Plus, Eye, Pencil, Trash2, AlertTriangle, Boxes, Coins, Ruler, RefreshCw, History,
 } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { SearchBar } from '@/components/ui/SearchBar';
@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/Badge';
 import { StatCard } from '@/components/shared/StatCard';
 import { ProductForm } from '@/components/shared/ProductForm';
 import { ProductCard } from './ProductCard';
+import { ProductHistory } from './ProductHistory';
 import { useStockStore } from '@/store/stockStore';
 import { useFicheTechnicStore } from '@/store/ficheTechnicStore';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -46,6 +47,7 @@ export default function Stock() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [viewing, setViewing] = useState<Product | null>(null);
+  const [historyOf, setHistoryOf] = useState<Product | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const filtered = useMemo(
@@ -230,6 +232,7 @@ export default function Stock() {
               product={p}
               index={i}
               onView={() => setViewing(p)}
+              onHistory={() => setHistoryOf(p)}
               onEdit={() => openEdit(p)}
               onDelete={() => setDeleteId(p.id)}
               canEdit={can('stock', 'edit')}
@@ -280,6 +283,7 @@ export default function Stock() {
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-center gap-1">
                         <Button size="icon" variant="ghost" onClick={() => setViewing(p)} title="Détails"><Eye size={16} /></Button>
+                        <Button size="icon" variant="ghost" onClick={() => setHistoryOf(p)} title="Historique du produit"><History size={16} className="text-gold-dark" /></Button>
                         {can('stock', 'edit') && (
                           <Button size="icon" variant="ghost" onClick={() => openEdit(p)} title="Modifier"><Pencil size={16} /></Button>
                         )}
@@ -344,6 +348,8 @@ export default function Stock() {
           </div>
         )}
       </Modal>
+
+      <ProductHistory product={historyOf} onClose={() => setHistoryOf(null)} />
 
       <ConfirmDialog
         open={!!deleteId}
