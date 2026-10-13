@@ -171,7 +171,10 @@ const toSupplier = (r: any): Supplier => ({
 });
 
 const toClient = (r: any): Client => ({
-  id: r.id, name: r.name, phone: r.phone ?? '', address: r.address ?? '', note: r.note ?? '',
+  id: r.id,
+  code: r.client_no != null ? Number(r.client_no) : undefined,
+  createdAt: r.created_at ?? undefined,
+  name: r.name, phone: r.phone ?? '', address: r.address ?? '', note: r.note ?? '',
   rc: r.rc ?? '', nif: r.nif ?? '', nis: r.nis ?? '', article: r.article ?? '',
   creditAmount: num(r.credit_amount),
   loginEmail: r.login_email ?? '',

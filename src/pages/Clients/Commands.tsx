@@ -36,6 +36,7 @@ import { useSettingsStore } from '@/store/settingsStore';
 import { useLanguage } from '@/hooks/useLanguage';
 import { usePermissions } from '@/hooks/usePermissions';
 import { formatCurrency, formatDate, formatDateTime, todayISO, DEFAULT_TVA_RATE } from '@/lib/utils';
+import { clientCodeMatches, clientMatches, formatClientCode } from '@/lib/clientCode';
 import { commandTtc, deliverySalesOf, lineTotal } from '@/lib/commandBilling';
 import { printCommandOrder, printDeliveryNote } from '@/lib/documents';
 import { PrintTitleDialog, type PrintTitleRequest } from '@/components/shared/PrintTitleDialog';
@@ -169,7 +170,8 @@ export default function CommandsPage() {
         c.clientName.toLowerCase().includes(q) ||
         c.reference.toLowerCase().includes(q) ||
         (c.bonNumber || '').toLowerCase().includes(q) ||
-        (c.clientPhone ? c.clientPhone.includes(search) : false);
+        (c.clientPhone ? c.clientPhone.includes(search) : false) ||
+        clientCodeMatches(clients.find((cl) => cl.id === c.clientId)?.code, search);
 
       const d = deliveryStatus(c);
       let matchesStatus = true;
@@ -199,7 +201,7 @@ export default function CommandsPage() {
 
       return matchesSearch && matchesStatus && matchesDate;
     });
-  }, [commands, scope, search, statusFilter, dateFilter, from, to]);
+  }, [commands, clients, scope, search, statusFilter, dateFilter, from, to]);
 
   const stats = useMemo(() => {
     const totalPaid = filteredCommands.reduce((s, c) => s + c.paidAmount, 0);
@@ -217,11 +219,7 @@ export default function CommandsPage() {
   const clientSearchResults = useMemo(
     () =>
       clientSearch
-        ? clients.filter(
-            (c) =>
-              c.name.toLowerCase().includes(clientSearch.toLowerCase()) ||
-              (c.phone || '').includes(clientSearch)
-          )
+        ? clients.filter((c) => clientMatches(c, clientSearch))
         : [],
     [clients, clientSearch]
   );
@@ -867,7 +865,7 @@ export default function CommandsPage() {
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             <div className="md:col-span-2">
-              <SearchBar value={search} onChange={setSearch} placeholder="Rechercher par client, téléphone, référence ou n° bon de commande…" />
+              <SearchBar value={search} onChange={setSearch} placeholder="Rechercher par N° client, client, téléphone, référence ou n° bon de commande…" />
             </div>
             <select
               value={statusFilter}
@@ -1255,7 +1253,7 @@ export default function CommandsPage() {
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
                     <Input
-                      placeholder="Rechercher un client…"
+                      placeholder="Rechercher un client (N° / nom / téléphone)…"
                       value={clientSearch}
                       onChange={(e) => setClientSearch(e.target.value)}
                       className="pl-10"
@@ -1282,7 +1280,10 @@ export default function CommandsPage() {
                         onClick={() => handleSelectClient(cli)}
                         className="w-full text-left p-3 hover:bg-gold/20 border-b border-gold/10 last:border-b-0 text-xs text-text-primary flex items-center justify-between"
                       >
-                        <span className="font-bold">{cli.name}</span>
+                        <span className="font-bold">
+                          <span className="me-1.5 font-mono text-gold-dark">N° {formatClientCode(cli.code)}</span>
+                          {cli.name}
+                        </span>
                         {cli.phone && <span className="text-text-muted">📞 {cli.phone}</span>}
                       </button>
                     ))}

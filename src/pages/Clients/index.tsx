@@ -33,6 +33,7 @@ import { useClientDebtStore } from '@/store/clientDebtStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { usePermissions } from '@/hooks/usePermissions';
 import { formatCurrency } from '@/lib/utils';
+import { byClientCode, clientMatches, formatClientCode } from '@/lib/clientCode';
 import { printPaymentReceipt } from '@/lib/documents';
 import { buildClientAccounts, EMPTY_CLIENT_ACCOUNT, sumAccounts, type ClientAccount } from '@/lib/accounts';
 import { toast } from '@/components/ui/Toast';
@@ -154,18 +155,13 @@ export default function ClientsPage() {
   const filtered = useMemo(
     () =>
       clients.filter((c) => {
-        const q = search.toLowerCase();
-        const match =
-          c.name.toLowerCase().includes(q) ||
-          (c.phone || '').includes(search) ||
-          (c.address || '').toLowerCase().includes(q);
-        if (!match) return false;
+        if (!clientMatches(c, search)) return false;
         const bal = statsOf(c.id).balance;
         if (filter === 'debt') return bal.hasDebt;
         if (filter === 'credit') return bal.credit > 0;
         if (filter === 'clear') return !bal.hasDebt && bal.credit <= 0;
         return true;
-      }),
+      }).sort(byClientCode),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [clients, search, filter, statsByClient]
   );
@@ -301,6 +297,10 @@ export default function ClientsPage() {
 
   const columns: DataColumn<Client>[] = [
     {
+      key: 'code', label: 'N°', align: 'center',
+      render: (c) => <span className="font-mono text-xs font-semibold text-gold-dark">{formatClientCode(c.code)}</span>,
+    },
+    {
       key: 'name', label: 'Client',
       render: (c) => (
         <div className="flex items-center gap-2.5">
@@ -399,7 +399,7 @@ export default function ClientsPage() {
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="min-w-[220px] flex-1">
-          <SearchBar value={search} onChange={setSearch} placeholder="Rechercher un client (nom / téléphone / adresse)…" />
+          <SearchBar value={search} onChange={setSearch} placeholder="Rechercher un client (N° / nom / téléphone / adresse)…" />
         </div>
         <Select
           value={filter}
@@ -448,7 +448,10 @@ export default function ClientsPage() {
                     {c.name.slice(0, 2).toUpperCase()}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h3 className="truncate font-display font-semibold text-text-primary">{c.name}</h3>
+                    <h3 className="truncate font-display font-semibold text-text-primary">
+                      <span className="me-1.5 font-mono text-xs text-gold-dark">N° {formatClientCode(c.code)}</span>
+                      {c.name}
+                    </h3>
                     <p className="flex items-center gap-1 truncate text-xs text-text-muted">
                       <Phone size={11} /> {c.phone || '—'}
                     </p>

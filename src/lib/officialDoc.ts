@@ -1,6 +1,8 @@
 import type { StoreSettings } from '@/types';
 import { formatCurrency, formatDate } from './utils';
 import { openPrintPreview } from './printWindow';
+import { formatClientCode } from './clientCode';
+import { useClientStore } from '@/store/clientStore';
 
 /* ============================================================================
  *  MODÈLE OFFICIEL DES DOCUMENTS IMPRIMÉS
@@ -89,6 +91,11 @@ export interface DocData {
   /** Libellé du destinataire : DOIT, FOURNISSEUR, EMPLOYÉ… */
   doitLabel?: string;
   doitName?: string;
+  /**
+   * N° du client imprimé à côté de son nom. Par défaut il est retrouvé
+   * d'après le nom du destinataire ; `null` le masque.
+   */
+  doitCode?: string | null;
   /** Identifiants du destinataire (adresse, R.C, NIF, NIS, article, tél). */
   doitLines?: string[];
   /** Références du document (N° BL, commande liée, chauffeur…) — à DROITE du DOIT. */
@@ -393,6 +400,18 @@ function tableHtml(t: DocTable): string {
     ${t.note ? `<div class="obs">${esc(t.note)}</div>` : ''}`;
 }
 
+/** Destinataires qui ne sont jamais des clients : pas de N° client. */
+const NON_CLIENT_LABELS = /FOURNISSEUR|PRODUCTION|EMPLOY|VERS[ÉE] À/i;
+
+/** N° du client destinataire du document, retrouvé d'après son nom. */
+function clientCodeOf(data: DocData): string {
+  if (data.doitCode !== undefined) return data.doitCode ?? '';
+  if (!data.doitName || NON_CLIENT_LABELS.test(data.doitLabel ?? '')) return '';
+  const key = data.doitName.trim().toLowerCase();
+  const hits = useClientStore.getState().clients.filter((c) => c.name.trim().toLowerCase() === key);
+  return hits.length === 1 ? formatClientCode(hits[0].code) : '';
+}
+
 /**
  * Rend et ouvre un document officiel dans une fenêtre d'impression.
  * Tous les modèles de l'application passent par ici : l'entreprise a un seul
@@ -405,6 +424,7 @@ export function printOfficialDocument(input: DocData, store: StoreSettings) {
   const leftSign = signs.length > 1 ? signs[0] : '';
   const rightSign = signs[signs.length - 1];
   const city = headerCity(store);
+  const clientCode = clientCodeOf(data);
 
   openPrintPreview(`<!doctype html>
 <html lang="fr">
@@ -422,6 +442,7 @@ export function printOfficialDocument(input: DocData, store: StoreSettings) {
         <div class="doit">${
           data.doitName
             ? `<span class="lbl">${esc(data.doitLabel || 'DOIT')} :</span> ${esc(data.doitName)}
+               ${clientCode ? `<span class="sub">N° CLIENT : ${esc(clientCode)}</span>` : ''}
                ${data.doitLines?.length ? `<span class="sub">${data.doitLines.map(esc).join('<br/>')}</span>` : ''}`
             : ''
         }</div>

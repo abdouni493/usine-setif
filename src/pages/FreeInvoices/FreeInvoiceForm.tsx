@@ -9,6 +9,7 @@ import { useClientStore } from '@/store/clientStore';
 import { useFicheTechnicStore } from '@/store/ficheTechnicStore';
 import { useFreeInvoiceStore, type FreeInvoiceInput } from '@/store/freeInvoiceStore';
 import { formatCurrency, todayISO, DEFAULT_TVA_RATE } from '@/lib/utils';
+import { clientMatches, formatClientCode } from '@/lib/clientCode';
 import type { FreeInvoice, FreeInvoiceDocType } from '@/types';
 
 interface Props {
@@ -112,11 +113,8 @@ export function FreeInvoiceForm({ open, editing, onClose, onSaved }: Props) {
   }, [open, editing]);
 
   const clientResults = useMemo(() => {
-    const term = clientSearch.trim().toLowerCase();
-    if (!term) return [];
-    return clients
-      .filter((c) => c.name.toLowerCase().includes(term) || (c.phone || '').includes(term))
-      .slice(0, 8);
+    if (!clientSearch.trim()) return [];
+    return clients.filter((c) => clientMatches(c, clientSearch)).slice(0, 8);
   }, [clients, clientSearch]);
 
   const pickClient = (id: string) => {
@@ -260,7 +258,7 @@ export function FreeInvoiceForm({ open, editing, onClose, onSaved }: Props) {
             <Input
               value={clientSearch}
               onChange={(e) => setClientSearch(e.target.value)}
-              placeholder="Rechercher un client existant (nom ou téléphone) — ou saisir les champs ci-dessous"
+              placeholder="Rechercher un client existant (N°, nom ou téléphone) — ou saisir les champs ci-dessous"
               icon={<Search size={16} />}
             />
             {clientResults.length > 0 && (
@@ -272,7 +270,7 @@ export function FreeInvoiceForm({ open, editing, onClose, onSaved }: Props) {
                     onClick={() => pickClient(c.id)}
                     className="flex w-full items-center justify-between border-b border-gold/5 px-4 py-2 text-left text-sm last:border-0 hover:bg-gold/10"
                   >
-                    <span className="font-semibold text-text-primary">{c.name}</span>
+                    <span className="font-semibold text-text-primary"><span className="me-1.5 font-mono text-xs text-gold-dark">N° {formatClientCode(c.code)}</span>{c.name}</span>
                     <span className="text-xs text-text-muted">{c.phone || '—'}</span>
                   </button>
                 ))}

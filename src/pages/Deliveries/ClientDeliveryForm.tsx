@@ -21,6 +21,7 @@ import {
 import { commandAdvanceAvailable, deliveryPaymentSplit } from '@/lib/commandBilling';
 import { stockRequirementsForDelivery } from '@/lib/ficheStock';
 import { formatCurrency, formatNumber, DEFAULT_TVA_RATE } from '@/lib/utils';
+import { clientMatches, formatClientCode } from '@/lib/clientCode';
 import type { Client, CommandDelivery } from '@/types';
 import { NewClientModal } from '@/components/shared/NewClientModal';
 
@@ -160,11 +161,8 @@ export function ClientDeliveryForm({ open, editing, onClose, onSaved }: Props) {
 
   /* ------------------------------------------------------- données client */
   const clientResults = useMemo(() => {
-    const term = clientSearch.trim().toLowerCase();
-    if (!term) return [];
-    return clients
-      .filter((c) => c.name.toLowerCase().includes(term) || (c.phone || '').replace(/\s/g, '').includes(term.replace(/\s/g, '')))
-      .slice(0, 8);
+    if (!clientSearch.trim()) return [];
+    return clients.filter((c) => clientMatches(c, clientSearch)).slice(0, 8);
   }, [clients, clientSearch]);
 
   /** Quantités du bon modifié : la base les remet « à livrer » avant de le refaire. */
@@ -435,7 +433,7 @@ export function ClientDeliveryForm({ open, editing, onClose, onSaved }: Props) {
           {client ? (
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gold/20 bg-gradient-card px-4 py-3">
               <div className="min-w-0">
-                <p className="font-bold text-text-primary">{client.name}</p>
+                <p className="font-bold text-text-primary"><span className="me-1.5 font-mono text-xs text-gold-dark">N° {formatClientCode(client.code)}</span>{client.name}</p>
                 <p className="text-xs text-text-muted">
                   {client.phone ? `📞 ${client.phone}` : 'Sans téléphone'}
                   {client.address ? ` · ${client.address}` : ''}
@@ -463,7 +461,7 @@ export function ClientDeliveryForm({ open, editing, onClose, onSaved }: Props) {
                     autoFocus
                     value={clientSearch}
                     onChange={(e) => setClientSearch(e.target.value)}
-                    placeholder="Rechercher le client par nom ou numéro de téléphone…"
+                    placeholder="Rechercher le client par N°, nom ou numéro de téléphone…"
                     icon={<Search size={16} />}
                   />
                 </div>
@@ -495,7 +493,10 @@ export function ClientDeliveryForm({ open, editing, onClose, onSaved }: Props) {
                         className="flex w-full items-center justify-between gap-3 border-b border-gold/5 px-4 py-2.5 text-left text-sm last:border-0 hover:bg-gold/10"
                       >
                         <span className="min-w-0">
-                          <span className="block font-semibold text-text-primary truncate">{c.name}</span>
+                          <span className="block font-semibold text-text-primary truncate">
+                            <span className="me-1.5 font-mono text-xs text-gold-dark">N° {formatClientCode(c.code)}</span>
+                            {c.name}
+                          </span>
                           <span className="block text-xs text-text-muted">{c.phone || '—'}</span>
                         </span>
                         <Badge variant={n > 0 ? 'warning' : 'neutral'}>{n} en attente</Badge>

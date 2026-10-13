@@ -157,6 +157,10 @@ export interface PurchaseReturn {
 // ---------- Clients & Client Debts ----------
 export interface Client {
   id: string;
+  /** N° du client (01, 02, …) : séquentiel, attribué à la création. */
+  code?: number;
+  /** Date de création — sert à numéroter les clients sans N° en base. */
+  createdAt?: string;
   name: string;
   phone: string;
   address?: string;

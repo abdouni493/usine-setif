@@ -4,6 +4,7 @@ import type {
 } from '@/types';
 import { db, rpc } from '@/lib/db';
 import { save } from '@/lib/persist';
+import { withClientCodes } from '@/lib/clientCode';
 import { useSalesStore } from './salesStore';
 import { useCommandStore } from './commandStore';
 import { useCaisseStore } from './caisseStore';
@@ -113,18 +114,19 @@ export const useClientStore = create<ClientState>()((set, get) => ({
       db.clients.list(), db.clientPayments.list(),
       db.partyOldDebts.list('client'), db.partyRefunds.list('client'),
     ]);
-    set({ clients, payments, oldDebts, refunds });
+    set({ clients: withClientCodes(clients), payments, oldDebts, refunds });
   },
 
   addClient: async (data) => {
-    const row = await save('clients.create', () => db.clients.create(data));
-    set({ clients: [...get().clients, row] });
-    return row;
+    const created = await save('clients.create', () => db.clients.create(data));
+    const clients = withClientCodes([...get().clients, created]);
+    set({ clients });
+    return clients.find((c) => c.id === created.id) ?? created;
   },
 
   updateClient: async (id, data) => {
     const row = await save('clients.update', () => db.clients.update(id, data));
-    set({ clients: get().clients.map((c) => (c.id === id ? row : c)) });
+    set({ clients: get().clients.map((c) => (c.id === id ? { ...row, code: row.code ?? c.code } : c)) });
   },
 
   deleteClient: async (id) => {
@@ -142,8 +144,9 @@ export const useClientStore = create<ClientState>()((set, get) => ({
     const existing = get().clients.find((c) => c.name.toLowerCase().startsWith('client passager'));
     if (existing) return existing;
     const row = await save('clients.passager', () => db.clients.passager());
-    set({ clients: [...get().clients.filter((c) => c.id !== row.id), row] });
-    return row;
+    const clients = withClientCodes([...get().clients.filter((c) => c.id !== row.id), row]);
+    set({ clients });
+    return clients.find((c) => c.id === row.id) ?? row;
   },
 
   payDebt: async (clientId, amount, paidAt, notes = '', method) => {

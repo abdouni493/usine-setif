@@ -1,4 +1,5 @@
 import { lockScroll } from './scrollLock';
+import { isArabicUi, toArabic, translateDocumentHtml } from './autoTranslate';
 
 /* ============================================================================
  *  APERÇU D'IMPRESSION DANS L'APPLICATION
@@ -39,6 +40,11 @@ export function closePrintPreview(): void {
  */
 export function openPrintPreview(html: string, title = 'Impression'): void {
   closePrintPreview();
+  // interface en arabe : le document imprimé est traduit lui aussi
+  if (isArabicUi()) {
+    html = translateDocumentHtml(html);
+    title = toArabic(title);
+  }
 
   const root = document.createElement('div') as PreviewRoot;
   root.id = ROOT_ID;

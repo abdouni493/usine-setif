@@ -23,6 +23,7 @@ import { useSettingsStore } from '@/store/settingsStore';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useLanguage } from '@/hooks/useLanguage';
 import { formatCurrency, formatDateTime, formatNumber, matchesDateFilter, type DateFilter } from '@/lib/utils';
+import { clientCodeMatches } from '@/lib/clientCode';
 import { recoveredOnLine } from '@/lib/readyStock';
 import { printDeliveryFor, printRecoveryFor } from '@/lib/deliveryDocs';
 import type { CommandDelivery, DeliveryRecovery } from '@/types';
@@ -98,9 +99,10 @@ export default function DeliveriesPage() {
           d.reference, d.saleReference, cmd?.reference, cmd?.clientName, cmd?.clientPhone, cmd?.bonNumber,
           d.location, d.driverName, ...d.items.map((i) => i.productName),
         ].filter(Boolean).join(' ').toLowerCase();
-        return hay.includes(term);
+        return hay.includes(term)
+          || clientCodeMatches(clients.find((c) => c.id === cmd?.clientId)?.code, term);
       });
-  }, [deliveries, commands, search, source, status, dateFilter]);
+  }, [deliveries, commands, clients, search, source, status, dateFilter]);
 
   const stats = useMemo(() => {
     const qty = rows.reduce((s, d) => s + d.items.reduce((a, i) => a + i.quantity, 0) - (d.recoveredQuantity ?? 0), 0);
@@ -122,9 +124,10 @@ export default function DeliveriesPage() {
         if (!term) return true;
         const d = deliveries.find((x) => x.id === r.deliveryId);
         return [r.reference, r.clientName, d?.reference, r.reason, ...r.items.map((i) => i.productName)]
-          .filter(Boolean).join(' ').toLowerCase().includes(term);
+          .filter(Boolean).join(' ').toLowerCase().includes(term)
+          || clientCodeMatches(clients.find((c) => c.id === r.clientId)?.code, term);
       });
-  }, [recoveries, deliveries, search, dateFilter]);
+  }, [recoveries, deliveries, clients, search, dateFilter]);
 
   /* ---------------------------------------------------------- impression */
   const askPrintDelivery = (d: CommandDelivery) =>
@@ -307,7 +310,7 @@ export default function DeliveriesPage() {
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="min-w-[220px] flex-1">
-          <SearchBar value={search} onChange={setSearch} placeholder="Rechercher un bon, un client, un produit…" />
+          <SearchBar value={search} onChange={setSearch} placeholder="Rechercher un bon, un client (N° / nom), un produit…" />
         </div>
         <div className="w-full sm:w-[210px]">
           <Select

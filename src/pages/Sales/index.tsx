@@ -23,6 +23,7 @@ import { useSettingsStore } from '@/store/settingsStore';
 import { useLanguage } from '@/hooks/useLanguage';
 import { usePermissions } from '@/hooks/usePermissions';
 import { formatCurrency, formatDate, formatDateTime, matchesDateFilter, type DateFilter } from '@/lib/utils';
+import { clientCodeMatches } from '@/lib/clientCode';
 import { printSaleInvoice } from '@/lib/invoicePrint';
 import { toast } from '@/components/ui/Toast';
 import type { Sale } from '@/types';
@@ -64,7 +65,8 @@ export default function SalesPage() {
         (cl?.name || '').toLowerCase().includes(q) ||
         (cl?.phone || '').includes(search) ||
         s.reference.toLowerCase().includes(q) ||
-        (s.bonNumber || '').toLowerCase().includes(q);
+        (s.bonNumber || '').toLowerCase().includes(q) ||
+        clientCodeMatches(cl?.code, search);
       const matchesOrigin =
         origin === 'all' ? true : origin === 'delivery' ? !!s.deliveryId : !s.deliveryId;
       return match && matchesOrigin && matchesDateFilter(s.date, dateFilter);
@@ -132,7 +134,7 @@ export default function SalesPage() {
       </div>
 
       <div className="flex flex-wrap items-center gap-3 mb-6">
-        <div className="flex-1 min-w-[200px]"><SearchBar value={search} onChange={setSearch} placeholder="Rechercher par client, n° facture ou n° bon de commande…" /></div>
+        <div className="flex-1 min-w-[200px]"><SearchBar value={search} onChange={setSearch} placeholder="Rechercher par N° client, client, n° facture ou n° bon de commande…" /></div>
         <Select value={dateFilter} onChange={(e) => setDateFilter(e.target.value as DateFilter)}
           options={[{ value: 'all', label: t('all') }, { value: 'today', label: t('today') }, { value: 'week', label: t('week') }, { value: 'month', label: t('month') }]} className="max-w-[180px]" />
         <Select value={origin} onChange={(e) => setOrigin(e.target.value as OriginFilter)}

@@ -25,6 +25,7 @@ import { useStockStore } from '@/store/stockStore';
 import { useFicheTechnicStore, type FicheTechnic } from '@/store/ficheTechnicStore';
 import { useLanguage } from '@/hooks/useLanguage';
 import { formatCurrency, todayISO, computeTva, DEFAULT_TVA_RATE } from '@/lib/utils';
+import { clientMatches, formatClientCode } from '@/lib/clientCode';
 import { printSaleInvoice, type InvoiceProductionDetail } from '@/lib/invoicePrint';
 import { printCommandOrder } from '@/lib/documents';
 import { toast } from '@/components/ui/Toast';
@@ -207,11 +208,7 @@ export default function POS() {
     () =>
       clientSearch
         ? clients
-            .filter(
-              (c) =>
-                c.name.toLowerCase().includes(clientSearch.toLowerCase()) ||
-                (c.phone || '').includes(clientSearch)
-            )
+            .filter((c) => clientMatches(c, clientSearch))
             .slice(0, 6)
         : [],
     [clientSearch, clients]
@@ -958,7 +955,7 @@ export default function POS() {
                 <Input
                   value={clientSearch}
                   onChange={(e) => { setClientSearch(e.target.value); setClientId(null); }}
-                  placeholder="Rechercher par nom ou téléphone…"
+                  placeholder="Rechercher par N°, nom ou téléphone…"
                   className="pl-9 h-11"
                 />
                 {clientResults.length > 0 && !clientId && (
@@ -969,7 +966,10 @@ export default function POS() {
                         onClick={() => selectClient(c)}
                         className="w-full text-left px-3 py-2.5 text-sm hover:bg-gold/10 border-b border-gold/5 last:border-0"
                       >
-                        <span className="font-medium text-text-primary">{c.name}</span>
+                        <span className="font-medium text-text-primary">
+                          <span className="me-1.5 font-mono text-xs text-gold-dark">N° {formatClientCode(c.code)}</span>
+                          {c.name}
+                        </span>
                         {c.phone && <span className="text-text-muted text-xs block">{c.phone}</span>}
                       </button>
                     ))}
@@ -987,7 +987,10 @@ export default function POS() {
                   {selectedClient.name.slice(0, 2).toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-text-primary truncate">{selectedClient.name}</p>
+                  <p className="font-semibold text-text-primary truncate">
+                    <span className="me-1.5 font-mono text-xs text-gold-dark">N° {formatClientCode(selectedClient.code)}</span>
+                    {selectedClient.name}
+                  </p>
                   <p className="text-xs text-text-muted flex items-center gap-1 truncate">
                     <Phone size={11} /> {selectedClient.phone || '—'}
                   </p>

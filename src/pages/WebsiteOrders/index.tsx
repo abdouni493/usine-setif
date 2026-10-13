@@ -21,6 +21,7 @@ import { useClientStore } from '@/store/clientStore';
 import { useFicheTechnicStore } from '@/store/ficheTechnicStore';
 import { usePermissions } from '@/hooks/usePermissions';
 import { formatCurrency, formatDateTime } from '@/lib/utils';
+import { clientCodeMatches, clientLabel } from '@/lib/clientCode';
 import { siteUrl } from '@/lib/siteUrl';
 
 const statusVariant: Record<WebsiteOrderStatus, 'warning' | 'success' | 'danger'> = {
@@ -217,7 +218,7 @@ function OrderEditModal({ o, onClose }: { o: WebsiteOrder; onClose: () => void }
       <div className="space-y-4">
         <Select label="Affecter à un client existant" value={form.clientId} onChange={(e) => chooseClient(e.target.value)}
           options={[{ value: '', label: '— Détection automatique / nouveau client —' },
-            ...clients.map((c) => ({ value: c.id, label: `${c.name}${c.phone ? ` — ${c.phone}` : ''}` }))]} />
+            ...clients.map((c) => ({ value: c.id, label: `${clientLabel(c)}${c.phone ? ` — ${c.phone}` : ''}` }))]} />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Input label="Nom *" value={form.clientName} onChange={(e) => setForm({ ...form, clientName: e.target.value })} />
           <Input label="Téléphone" value={form.clientPhone} onChange={(e) => setForm({ ...form, clientPhone: e.target.value })} />
@@ -286,7 +287,7 @@ function AcceptModal({ o, onClose }: { o: WebsiteOrder; onClose: () => void }) {
         </p>
         <Select label="Client" value={clientId} onChange={(e) => setClientId(e.target.value)}
           options={[{ value: '', label: `➕ Créer « ${o.clientName} » automatiquement` },
-            ...clients.map((c) => ({ value: c.id, label: `${c.name}${c.phone ? ` — ${c.phone}` : ''}` }))]} />
+            ...clients.map((c) => ({ value: c.id, label: `${clientLabel(c)}${c.phone ? ` — ${c.phone}` : ''}` }))]} />
         {matched && <p className="text-xs text-pistachio">Client détecté par le téléphone : {matched.name}</p>}
         <p className="font-semibold text-text-primary">Total : {formatCurrency(o.totalAmount)}</p>
       </div>
@@ -319,6 +320,7 @@ function CancelModal({ o, onClose }: { o: WebsiteOrder; onClose: () => void }) {
 export default function WebsiteOrdersPage() {
   const orders = useWebsiteStore((s) => s.orders);
   const deleteOrder = useWebsiteStore((s) => s.deleteOrder);
+  const clients = useClientStore((s) => s.clients);
   const loadOrders = useWebsiteStore((s) => s.loadOrders);
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<'' | WebsiteOrderStatus>('pending');
@@ -344,9 +346,10 @@ export default function WebsiteOrdersPage() {
       if (from && day < from) return false;
       if (to && day > to) return false;
       return !q || `${o.reference} ${o.clientName} ${o.clientPhone} ${o.clientAddress} ${o.items.map((i) => i.productName).join(' ')}`
-        .toLowerCase().includes(q);
+        .toLowerCase().includes(q)
+        || clientCodeMatches(clients.find((c) => c.id === o.clientId)?.code, q);
     });
-  }, [orders, query, status, from, to]);
+  }, [orders, clients, query, status, from, to]);
 
   return (
     <div>
@@ -368,7 +371,7 @@ export default function WebsiteOrdersPage() {
         ))}
       </div>
       <div className="flex flex-col md:flex-row gap-3 mb-5">
-        <SearchBar value={query} onChange={setQuery} placeholder="Client, téléphone, référence, produit…" className="md:max-w-md" />
+        <SearchBar value={query} onChange={setQuery} placeholder="N° client, client, téléphone, référence, produit…" className="md:max-w-md" />
         <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="md:w-44" aria-label="Du" />
         <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="md:w-44" aria-label="Au" />
       </div>

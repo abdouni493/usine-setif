@@ -15,6 +15,7 @@ import { useCommandStore } from '@/store/commandStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { usePermissions } from '@/hooks/usePermissions';
 import { formatCurrency, formatDate, todayISO } from '@/lib/utils';
+import { clientCodeMatches, formatClientCode } from '@/lib/clientCode';
 import {
   buildClientAccounts, buildSupplierAccounts, sumAccounts,
   type ClientAccount, type SupplierAccount,
@@ -40,6 +41,8 @@ type Filter = 'debt' | 'credit' | 'all';
 
 interface Row {
   id: string;
+  /** N° du client (vide pour un fournisseur). */
+  code?: number;
   name: string;
   phone: string;
   account: ClientAccount | SupplierAccount;
@@ -80,12 +83,12 @@ export function DebtsOverview() {
   const rows = useMemo<Row[]>(() => {
     if (!open) return [];
     const base: Row[] = open === 'clients'
-      ? clients.map((c) => ({ id: c.id, name: c.name, phone: c.phone || '', account: clientAccounts.get(c.id)! }))
+      ? clients.map((c) => ({ id: c.id, code: c.code, name: c.name, phone: c.phone || '', account: clientAccounts.get(c.id)! }))
       : suppliers.map((s) => ({ id: s.id, name: s.name, phone: s.phone || '', account: supplierAccounts.get(s.id)! }));
     const q = search.trim().toLowerCase();
     return base
       .filter((r) => r.account)
-      .filter((r) => !q || r.name.toLowerCase().includes(q) || r.phone.includes(q))
+      .filter((r) => !q || r.name.toLowerCase().includes(q) || r.phone.includes(q) || clientCodeMatches(r.code, q))
       .filter((r) =>
         filter === 'all' ? true : filter === 'debt' ? r.account.net > 0.005 : r.account.net < -0.005
       )
@@ -138,7 +141,8 @@ export function DebtsOverview() {
             ],
             rows: rows.map((r) => ({
               cells: [
-                r.name.toUpperCase(), r.phone || '/',
+                isClient && r.code != null ? `N° ${formatClientCode(r.code)} — ${r.name.toUpperCase()}` : r.name.toUpperCase(),
+                r.phone || '/',
                 formatCurrency(r.account.rest),
                 formatCurrency(r.account.credit + r.account.advance),
                 r.account.net < 0 ? `+ ${formatCurrency(-r.account.net)}` : formatCurrency(r.account.net),
@@ -272,7 +276,7 @@ export function DebtsOverview() {
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Rechercher (nom, téléphone)…"
+                  placeholder="Rechercher (N°, nom, téléphone)…"
                   className="h-10 w-full rounded-xl border-2 border-[--border-input] bg-[--surface-input] pl-9 pr-3 text-sm font-medium text-text-primary placeholder:text-text-muted/70 focus:border-gold focus:outline-none focus:ring-2 focus:ring-gold/30"
                 />
               </div>
@@ -320,7 +324,10 @@ export function DebtsOverview() {
                       const credit = a.credit + a.advance;
                       return (
                         <tr key={r.id} className="border-t border-gold/10 hover:bg-gold/5">
-                          <td className="px-3 py-2 text-xs font-semibold text-text-primary">{r.name}</td>
+                          <td className="px-3 py-2 text-xs font-semibold text-text-primary">
+                            {r.code != null && <span className="me-1.5 font-mono text-gold-dark">N° {formatClientCode(r.code)}</span>}
+                            {r.name}
+                          </td>
                           <td className="px-3 py-2 text-xs text-text-muted">{r.phone || '—'}</td>
                           <td className="px-3 py-2 text-right text-xs tabular">{formatCurrency(a.billed)}</td>
                           <td className="px-3 py-2 text-right text-xs tabular text-pistachio">{formatCurrency(a.paid)}</td>

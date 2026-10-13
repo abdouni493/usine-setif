@@ -18,6 +18,8 @@ import { useSettingsStore } from '@/store/settingsStore';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useLanguage } from '@/hooks/useLanguage';
 import { formatCurrency, formatDate, matchesDateFilter, type DateFilter } from '@/lib/utils';
+import { useClientStore } from '@/store/clientStore';
+import { clientCodeMatches } from '@/lib/clientCode';
 import { printSaleInvoice } from '@/lib/invoicePrint';
 import { printFreeDeliveryNote } from '@/lib/documents';
 import type { FreeInvoice, FreeInvoiceDocType } from '@/types';
@@ -55,6 +57,7 @@ export default function FreeInvoicesPage() {
   const [printPrompt, setPrintPrompt] = useState<FreeInvoice | null>(null);
   const [titleRequest, setTitleRequest] = useState<PrintTitleRequest | null>(null);
 
+  const clients = useClientStore((s) => s.clients);
   const rows = useMemo(() => {
     const term = search.trim().toLowerCase();
     return [...invoices]
@@ -64,9 +67,10 @@ export default function FreeInvoicesPage() {
         if (!matchesDateFilter(inv.date, dateFilter)) return false;
         if (!term) return true;
         return [inv.reference, inv.clientName, inv.clientPhone, ...inv.lines.map((l) => l.productName)]
-          .filter(Boolean).join(' ').toLowerCase().includes(term);
+          .filter(Boolean).join(' ').toLowerCase().includes(term)
+          || clientCodeMatches(clients.find((c) => c.id === inv.clientId)?.code, term);
       });
-  }, [invoices, search, dateFilter, typeFilter]);
+  }, [invoices, clients, search, dateFilter, typeFilter]);
 
   const totals = useMemo(() => ({
     count: rows.length,
@@ -201,7 +205,7 @@ export default function FreeInvoicesPage() {
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="min-w-[220px] flex-1">
-          <SearchBar value={search} onChange={setSearch} placeholder="Rechercher un document, un client, un produit…" />
+          <SearchBar value={search} onChange={setSearch} placeholder="Rechercher un document, un client (N° / nom), un produit…" />
         </div>
         <div className="w-full sm:w-[230px]">
           <Select
